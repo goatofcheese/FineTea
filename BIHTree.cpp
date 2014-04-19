@@ -23,8 +23,9 @@ Collision BIHNode::LeafCollide(const Ray &r, Faceptr faces[], PolySurf *psurf) c
 
   for(int i = leafstart; i <= leafend; i++){
 	c = faces[i]->RayCollide(r, psurf);
-	if(c.t < cnear.t)
+	if(c.t < cnear.t){
 	  cnear = c;
+	}
   }
   
   return cnear;

@@ -92,7 +92,7 @@ Collision shoot(Ray r, vector<Object*> scene){
 	for(long l = 0; l < scene.size(); l++){
 		col = scene.at(l)->RayCollide(r);			
 		if(col.t != INFINITY)
-		{	
+		{
 			if(closest.objectid == -1 || ((col.x - r.p).norm() < (closest.x - r.p).norm())){
 				closest = col;
 				closest.objectid = l;
@@ -268,6 +268,10 @@ int main(int argc, char* argv[]){
 	else if(view == 'v')
 		orthographic = false;
 
+std::cerr << d1 << std::endl;
+std::cerr << d2 << std::endl;
+std::cerr << d3 << std::endl;
+
 	//Adjust pixel height accordinglly
 	Height = Width/d2;
 	
@@ -343,11 +347,16 @@ int main(int argc, char* argv[]){
 				Vector3d p = center + ((px + rx) * ux) + ((py + ry) * uy);
 				//if orthographic, shoot ray perpendicular to screen
 				if(orthographic){
+//					std::cout << pin << std::endl;
 					ur = cam->getDir().normalize();
-					std::cout<< ur << std::endl;
+//					std::cerr << ur << std::endl;
+//					std::cerr << std::endl;
 					pin = p;
+					//pin = Vector3d(0,0,0);
+					//pin = center;
 				}
 				else{
+//					std::cout << pin << std::endl;
 					ur = (p - pin).normalize();
 				}
 				Ray r(pin, ur);
