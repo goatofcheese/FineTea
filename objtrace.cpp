@@ -10,12 +10,11 @@ Usage:
 #include "Matrix.h"
 #include "Camera.h"
 #include "ViewScreen.h"
-#include "Sphere.h"
 #include "PointLight.h"
 #include "ParallelLight.h"
 #include "ImageFile.h"
 #include "Color.h"
-#include "NewMaterial.h"
+#include "Material.h"
 #include "PolySurf.h"
 #include "OBJFile.h"
 #include <vector>
@@ -84,20 +83,20 @@ void startgraphics(int w, int h){
 
 
 //returns index to closest hit object
-RayHit shoot(Vector3d ur, Vector3d base, vector<Object*> scene){
+Collision shoot(Ray r, vector<Object*> scene){
 
-	RayHit rh, closest;
-	Vector3d hit;
-	closest.oindex = -1;
-	closest.distance = INFINITY;
-	closest.hit = false;
+	//RayHit rh, closest;
+	Collision col, closest;
+	closest.objectid = -1;
+	closest.t = INFINITY;
 	for(long l = 0; l < scene.size(); l++){
-		rh = scene.at(l)->hits(ur, base, hit);			
-		if(rh.hit)
+		col = scene.at(l)->RayCollide(r);			
+		//std::cout << col << std::endl;
+		if(col.t != INFINITY)
 		{	
-			if(closest.oindex == -1 || ((rh.point - base).norm() < (closest.point - base).norm())){
-				closest = rh;
-				closest.oindex = l;
+			if(closest.objectid == -1 || ((col.x - r.p).norm() < (closest.x - r.p).norm())){
+				closest = col;
+				closest.objectid = l;
 			}
 		}
 	}
@@ -105,22 +104,21 @@ RayHit shoot(Vector3d ur, Vector3d base, vector<Object*> scene){
 	return closest;	
 } 
 
-Color directShade(Vector3d eye, RayHit rh, Color lcolor, Vector3d ul, vector<Object*> scene){
+Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Object*> scene){
 
-	int co = 100;	//specular coefficient
 	double id, is, kd = 1.0, ks = 1.0;
 	Vector3d h;
 	Color cd, cs, ret, ambient, diffuse, specular;
 
-	NewMaterial mat = scene.at(rh.oindex)->getMaterial(rh);
+	Material mat = *(col.m);
 	ambient = mat.a;
 	diffuse = mat.d;
 	specular = mat.s;
 	int ui, vi;
 
 	if(mat.amap){
-		ui = mat.amap[0].NCols() * rh.uv[0];
-		vi = mat.amap[0].NRows() * rh.uv[1];
+		ui = mat.amap[0].NCols() * col.uv[0];
+		vi = mat.amap[0].NRows() * col.uv[1];
 		if(ui >= mat.amap[0].NCols()) ui--;
 		if(vi >= mat.amap[0].NCols()) vi--;
 		ambient[0] = (double)mat.amap[0][vi][ui][0] / 255;
@@ -128,8 +126,8 @@ Color directShade(Vector3d eye, RayHit rh, Color lcolor, Vector3d ul, vector<Obj
 		ambient[2] = (double)mat.amap[0][vi][ui][2] / 255;
 	}
 	if(mat.dmap){
-		ui = mat.dmap[0].NCols() * rh.uv[0];
-		vi = mat.dmap[0].NRows() * rh.uv[1];
+		ui = mat.dmap[0].NCols() * col.uv[0];
+		vi = mat.dmap[0].NRows() * col.uv[1];
 		if(ui >= mat.dmap[0].NCols()) ui--;
 		if(vi >= mat.dmap[0].NCols()) vi--;
 		diffuse[0] = (double)mat.dmap[0][vi][ui][0] / 255;
@@ -137,9 +135,9 @@ Color directShade(Vector3d eye, RayHit rh, Color lcolor, Vector3d ul, vector<Obj
 		diffuse[2] = (double)mat.dmap[0][vi][ui][2] / 255;
 	}
 
-	h = ((rh.point- eye).normalize() + ul).normalize();
-	id = max(-1 * (ul * rh.normal), 0.);
-	is = (h * rh.normal);
+	h = ((col.x- ray.p).normalize() + ul).normalize();
+	id = max(-1 * (ul * col.n), 0.);
+	is = (h * col.n);
 	is = pow(is, mat.exp);
 
 	cd = id * (diffuse * lcolor);
@@ -160,10 +158,10 @@ Color directShade(Vector3d eye, RayHit rh, Color lcolor, Vector3d ul, vector<Obj
 	return ret;
 }
 
-Color recShade(Vector3d eye, RayHit rh, int level, vector<Object*> scene, vector<Light*> lights){
+Color recShade(Ray r, Collision col, int level, vector<Object*> scene, vector<Light*> lights){
 	Vector3d ul;
-	Color color, r;
-	RayHit visCheck;
+	Color color, recCol;
+	Collision visCheck;
 	int occluded = 0;
 	double id;
 	color = black;
@@ -176,14 +174,15 @@ Color recShade(Vector3d eye, RayHit rh, int level, vector<Object*> scene, vector
 		if(light == NULL)
 			continue;
 
-		ul = light->getDirection(rh.point);	
+		ul = light->getDirection(col.x);	
 
 		//check for visibility
-		visCheck = shoot( (light->getPos() - rh.point).normalize(), rh.point , scene);
+		Ray sray(col.x, (light->getPos() - col.x).normalize());
+		visCheck = shoot(sray, scene);
 
-		double euclidDist = (light->getPos() - rh.point).norm();
-		if(visCheck.distance > abs(euclidDist) || visCheck.distance < SMALL_NUMBER){
-			color = color + directShade(eye, rh, light->getColor(), ul,  scene);
+		double euclidDist = (light->getPos() - col.x).norm();
+		if(visCheck.t > abs(euclidDist) || visCheck.t < SMALL_NUMBER){
+			color = color + directShade(r, col, light->getColor(), ul,  scene);
 		}
 
 	}
@@ -191,18 +190,19 @@ Color recShade(Vector3d eye, RayHit rh, int level, vector<Object*> scene, vector
 
 	//calc reflection vector
 	Vector3d refVec;
-	refVec = (rh.point - eye) - (2 * (rh.normal * (rh.point - eye)) * rh.normal);
+	refVec = (col.x - r.p) - (2 * (col.n * (col.x - r.p)) * col.n);
 	refVec = refVec.normalize();
 
 	//shoot reflection vector
-	RayHit refhit = shoot(refVec, rh.point, scene);
+	Ray refRay(col.x, refVec);
+	Collision refcol = shoot(refRay, scene);
 
 
-	if(refhit.distance != INFINITY){
-		r = recShade(rh.point, refhit, level + 1, scene, lights);
-		color = color + r;
-		r = directShade(eye, rh, color, refhit.point - rh.point, scene);
-		color = color + r;
+	if(refcol.t != INFINITY){
+		recCol = recShade(refRay, refcol, level + 1, scene, lights);
+		color = color + recCol;
+		recCol = directShade(r, col, color, refcol.x - col.x, scene);
+		color = color + recCol;
 	}
 
 	for(int i = 0; i < 3; i++){
@@ -217,19 +217,7 @@ Color recShade(Vector3d eye, RayHit rh, int level, vector<Object*> scene, vector
 
 vector<Object*> buildScene(){
 
-/*	NewMaterial mat1 = NewMaterial(Color(.2, 0., 0., 1.), Color(0.7, 0.0, 0.0),
-								Color(0.5, 0.5, 0.5), 100.);
-	NewMaterial mat2 = NewMaterial(Color(0., .2, 0., 1.), Color(0.0, 0.7, 0.0),
-								Color(0.2, 0.2, 0.2), 100.);
-*/
 	std::vector<Object*> scene(1);
-/*   Vector3d *center;
-   center = new Vector3d(-2., 0.0, 2.);
-   scene.at(0) = new Sphere(*center, 0.5, mat1); //red
-
-	center = new Vector3d(0.0, 4., 2.);
-   scene.at(1) = new Sphere(*center, 1.0, mat2); //green
-*/
 	objfile.read();
 	scene.at(0) = objfile.getscene();
 	return scene;
@@ -310,7 +298,7 @@ int main(int argc, char* argv[]){
 	int i, rows, j, cols, count=0;
 	double ph, pw, rx, ry, rz, pz, py, px;
 	Vector3d center, pin, ux, uy, uz, ur, hit, base;
-	RayHit closest;
+	Collision closest;
 	unsigned char r, g, b, a;
 	RGBApixel color;
 
@@ -363,10 +351,11 @@ int main(int argc, char* argv[]){
 				else{
 					ur = (p - pin).normalize();
 				}
-				closest = shoot(ur, pin, scene);
-				if(closest.oindex != -1){
+				Ray r(pin, ur);
+				closest = shoot(r, scene);
+				if(closest.objectid != -1){
 					count++;
-					shades[n] = recShade(pin, closest, 0, scene, lights);
+					shades[n] = recShade(r, closest, 0, scene, lights);
 				}
 				else{
 					shades[n][0] = 0;
@@ -385,7 +374,8 @@ int main(int argc, char* argv[]){
 			(*pixmap)[i][j].a = 255;
 		}
 	}
-
+	
+	std::cout<< "count: " << count << std::endl;
 	glutDisplayFunc(drawScreen);
 	glutKeyboardFunc(handleKey);
 	glutMainLoop();

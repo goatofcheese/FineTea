@@ -5,7 +5,7 @@ struct RayHit{
 	double distance;
 	long oindex;
 	double uv[2];
-	int face;
+	Material *mat;
 	
 };
 

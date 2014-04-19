@@ -102,6 +102,7 @@ int OBJFile::read(const char *fname){
 }
 
 PolySurf *OBJFile::getscene(){
+  psurf->BuildBIHTree();
   return psurf;
 }
 
@@ -242,11 +243,11 @@ int OBJFile::processf(char *line){
   for(int i = 1, j = 0; i < strlen(line); i++){
     if(isspace(line[i])){
       if(i > 1){
-	if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
-	  errmsg("Invalid vertex index");
-	  return 3;
-	}
-	psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
+			if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
+			  errmsg("Invalid vertex index");
+			  return 3;
+			}
+			psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
       }
       idx[0] = idx[1] = idx[2] = 0;
       j = 0;
@@ -272,6 +273,7 @@ int OBJFile::processf(char *line){
   }
 
   psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
+  psurf->setFaceNormal(faceidx);
   return 0;
 }
 

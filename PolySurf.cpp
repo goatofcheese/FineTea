@@ -10,6 +10,7 @@
 
 #include "PolySurf.h"
 #include "MakeSpace.h"
+#include "BIHTree.h"
 
 using namespace std;
 
@@ -29,7 +30,8 @@ PolySurf::PolySurf(){
   maxgroups = maxmaterials = 0;
   groups = NULL;
   materials = NULL;
-  lastHitFace = -1;
+  
+  bihtree = NULL;
 }
 
 PolySurf::~PolySurf(){
@@ -41,12 +43,20 @@ PolySurf::~PolySurf(){
   delete []lines;
   delete []groups;
   delete []materials;
+  delete bihtree;
 }
 
 void PolySurf::addVertex(const Vector3d &v){
   if(maxverts == nverts)
     verts = makespace <Vector3d> (maxverts, verts);
   verts[nverts++] = v;
+  
+  for(int i = 0; i < 3; i++){
+	if(v[i] < bbox.bounds[0][i])
+	  bbox.bounds[0][i] = v[i];
+	if(v[i] > bbox.bounds[1][i])
+	  bbox.bounds[1][i] = v[i];
+  }  
 }
 
 void PolySurf::addNormal(const Vector3d &n){
@@ -73,11 +83,23 @@ int PolySurf::newFace(int g, int m){
   
   faces[nfaces].setGroup(g);
   faces[nfaces].setMaterial(m);
+
   return nfaces++;
 }
 
 void PolySurf::addFaceVert(int f, int v, int n, int u){
   faces[f].addVert(v, n, u);
+}
+
+void PolySurf::setFaceNormal(int f){
+  if(faces[f].nverts < 3)
+	faces[f].normal = Vector3d(0, 0, 0);
+  else{
+	Vector3d e0 = verts[faces[f].faceverts[1].v] - verts[faces[f].faceverts[0].v];
+	Vector3d e1 = verts[faces[f].faceverts[faces[f].nverts - 1].v] - 
+					verts[faces[f].faceverts[0].v];
+	faces[f].normal = (e0 % e1).normalize();
+  }
 }
 
 int PolySurf::newLine(){
@@ -113,7 +135,7 @@ int PolySurf::newMaterial(char *mname){
     return idx;
 
   if(maxmaterials == nmaterials)
-    materials = makespace <NewMaterial> (maxmaterials, materials);
+    materials = makespace <Material> (maxmaterials, materials);
   
   materials[nmaterials].setName(mname);
   return nmaterials++;
@@ -158,183 +180,44 @@ void PolySurf::addFaceMaterial(int f, int m){
   faces[f].setMaterial(m);
 }
 
-Vector3d PolySurf::Centroid(){
-  Vector3d c;
-  for(int i = 0; i < nverts; i++)
-    c = c + verts[i];
-  c = c / nverts;
+void PolySurf::BuildBIHTree(){
+  bihtree = new BIHTree(this);
+}
+
+Collision PolySurf::RayCollide(const Ray &r) const{
+  Collision c;
+
+  c = BBoxCollide(r);
+  if(c.t != INFINITY) {
+	c = bihtree->RayCollide(r);
+  }
+
   return c;
 }
 
-Vector3d PolySurf::MinBBox(){
-  Vector3d min;
-  if(nverts > 0){
-    min = verts[0];
-    for(int i = 1; i < nverts; i++)
-      for(int j = 0; j < 3; j++){
-	if(verts[i][j] < min[j])
-	  min[j] = verts[i][j];
-      }
-  }
-  return min;
-}
-
-Vector3d PolySurf::MaxBBox(){
-  Vector3d max;
-  if(nverts > 0){
-    max = verts[0];
-    for(int i = 1; i < nverts; i++)
-      for(int j = 0; j < 3; j++){
-	if(verts[i][j] > max[j])
-	  max[j] = verts[i][j];
-      }
-  }
-  return max;
-}
-
-RayHit PolySurf::hits(Vector3d ur, Vector3d base, Vector3d& point){
-
-	RayHit closestHit;
-
-	//First check if it hits the bounding box
-	//Smit's method
-	
-
-	Vector3d bounds[2];
-	bounds[0] = MinBBox();
-	bounds[1] = MaxBBox();
-	bool hit = true;
-	float tmin, tmax, tymin, tymax, tzmin, tzmax;
-
-	if(ur.x >= 0){
-		tmin = (bounds[0].x - base.x) / ur.x;
-		tmax = (bounds[0].x - base.x) / ur.x;
-	}
-	else {
-		tmin = (bounds[1].x - base.x) / ur.x;
-		tmax = (bounds[0].x - base.x) / ur.x; 
-	}
-	if(ur.y >= 0){
-		tymin = (bounds[0].y - base.y) / ur.y;
-		tymax = (bounds[1].y - base.y) / ur.y;
-	}
-	else {
-		tymin = (bounds[1].y - base.y) / ur.y;
-		tymax = (bounds[0].y - base.y) / ur.y;
-	}
-	if( tmin > tymax) {
-		closestHit.hit = false;
-		return closestHit;
-	}
-	//
-	tmin = max(tmin, tymin);
-	tmax = min(tmax, tymax);
-	if(ur.z >= 0){
-		tzmin = (bounds[0].z - base.z) / ur.z;
-		tzmax = (bounds[1].z - base.z) / ur.z;
-	}
-	else {
-		tzmin = (bounds[1].z - base.z) / ur.z;
-		tzmax = (bounds[0].z - base.z) / ur.z;
-	}
-	if(tymin > tzmax){
-		closestHit.hit = false;
-		return closestHit;
-	}
-	//
-	if(tzmin > tmin)
-		tmin = tzmin;
-	if(tzmax < tmax)
-		tmax = tzmax;
-	
-	//see which face it hits
-	Vector3d e1, e2, p, s, q, v0, v1, v2;
-	double a, f, u, v, t;
-
-	int i;
-	closestHit.distance = INFINITY;
-	closestHit.hit = false;
-	closestHit.oindex = -1;
-	closestHit.face = -1;
-	for(i = 0; i < nfaces; i++){
-		v0 = verts[faces[i].verts[0][0]];
-		v1 = verts[faces[i].verts[1][0]];
-		v2 = verts[faces[i].verts[2][0]];
-
-		e1 = v1 - v0;
-		e2 = v2 - v0;
-		p = ur % e2;
-		a = e1 * p;
-		if(a > -0.0001 && a < 0.0001){
-			continue;
-		}
-		f = 1./a;
-		s = base - v0;
-		u = f * (s * p);
-		if(u < 0.0 || u > 1.0){
-			continue;
-		}
-
-		q = s % e1;
-		v = f * (ur * q);
-		if(v < 0.0 || u+v > 1.0){
-			continue;
-		}
-
-		//hit
-		t = f * (e2 * q);
-		if(t < closestHit.distance && t > 0.001){
-
-			closestHit.distance = t;
-			closestHit.point = base + (t * ur);
-			closestHit.normal = (e1 % e2).normalize();
-			closestHit.hit = true;	
-			//calc uvs
-			Vector2d uv0, uv1, uv2;
-			if(faces[i].verts[0][2] != -1 && faces[i].verts[0][2] != -1 
-					&& faces[i].verts[0][2] != -1 ){
-				uv0 = uvs[faces[i].verts[0][2]];
-				uv1 = uvs[faces[i].verts[1][2]];
-				uv2 = uvs[faces[i].verts[2][2]];
-				closestHit.uv[0] = ((1- u - v) * uv0[0]) + (u * uv1[0]) + (v * uv2[0]);
-				closestHit.uv[1] = ((1- u - v) * uv0[1]) + (u * uv1[1]) + (v * uv2[1]);
-			}
-			closestHit.face = i;
-
-		}
-	}
-
-	return closestHit;
-}
-
-NewMaterial PolySurf::getMaterial(RayHit r){
-	if(r.face != -1)
-		return materials[faces[r.face].material];
-	return NULL;
-}
-
 ostream& operator<< (ostream& os, const PolySurf& ps){
-  os << "[polysurf: " << endl;
+  os << "[polysurf: " << '\n';
+  os << "bbox " << ps.bbox << '\n';
   os << "verts (" << ps.nverts << ") = ";
   for(int i = 0; i < ps.nverts; i++)
     os << ps.verts[i] << " ";
-  os << endl;
-  os << "faces (" << ps.nfaces << ") = " << endl;
+  os << '\n';
+  os << "faces (" << ps.nfaces << ") = " << '\n';
   for(int i = 0; i < ps.nfaces; i++)
-    os << i << " : " << ps.faces[i] << endl;
-  os << "lines (" << ps.nlines << ") = " << endl;
+    os << i << " : " << ps.faces[i] << '\n';
+  os << "lines (" << ps.nlines << ") = " << '\n';
   for(int i = 0; i < ps.nlines; i++)
-    os << i << " : " << ps.lines[i] << endl;
+    os << i << " : " << ps.lines[i] << '\n';
   os << "points (" << ps.npoints << ") = ";
   for(int i = 0; i < ps.npoints; i++)
     os << "(" << i << " : " << ps.points[i] << ") ";
-  os << endl;
-  os << "groups (" << ps.ngroups << ") = " << endl;
+  os << '\n';
+  os << "groups (" << ps.ngroups << ") = " << '\n';
   for(int i = 0; i < ps.ngroups; i++)
-    os << i << " : " << ps.groups[i] << endl;
-  os << "materials (" << ps.nmaterials << ") = " << endl;
+    os << i << " : " << ps.groups[i] << '\n';
+  os << "materials (" << ps.nmaterials << ") = " << '\n';
   for(int i = 0; i < ps.nmaterials; i++)
-    os << i << " : " << ps.materials[i] << endl;
+    os << i << " : " << ps.materials[i] << '\n';
   os << "]";
   return os;
 }

@@ -13,8 +13,8 @@ else
   endif
 endif
 
-HFILES = File.${H} OBJFile.${H} MTLFile.${H} ImageFile.${H} PolySurf.${H} Face.${H} Line.${H} Group.${H} NewMaterial.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H} MakeSpace.${H} Camera.${H} ViewScreen.${H} Sphere.${H} Light.${H} PointLight.${H} Material.${H} ParallelLight.${H} Matrix.${H}
-OFILES = File.o OBJFile.o MTLFile.o ImageFile.o PolySurf.o Face.o Line.o Group.o NewMaterial.o Pixmap.o Color.o Vector.o Utility.o Camera.o ViewScreen.o Sphere.o Light.o PointLight.o Material.o ParallelLight.o Matrix.o
+HFILES = File.${H} OBJFile.${H} MTLFile.${H} ImageFile.${H} Ray.${H} Collision.${H} AABBox.${H} Object.${H} PolySurf.${H} BIHTree.${H} Face.${H} Line.${H} Group.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H} MakeSpace.${H} Camera.${H} ViewScreen.${H} Light.${H} PointLight.${H} Material.${H} ParallelLight.${H} Matrix.${H}
+OFILES = File.o OBJFile.o MTLFile.o ImageFile.o Ray.o AABBox.o Object.o PolySurf.o BIHTree.o Face.o Line.o Group.o Pixmap.o Color.o Vector.o Utility.o Camera.o ViewScreen.o Light.o PointLight.o Material.o ParallelLight.o Matrix.o
 
 PROJECT = objtrace
 
@@ -36,8 +36,23 @@ MTLFile.o:  MTLFile.${C} File.${H} MTLFile.${H} ImageFile.${H} Color.${H} PolySu
 ImageFile.o:  ImageFile.${C} File.${H} ImageFile.${H} Pixmap.${H} 
 	${CC} ${CFLAGS} -c ImageFile.${C}
 
+Ray.o: Ray.${C} Ray.${H}
+	${CC} ${CFLAGS} -c Ray.${C}
+
+Collision.o: Collision.${C} Collision.${H}
+	${CC} ${CFLAGS} -c Collision.${C}
+
+AABBox.o: AABBox.${C} AABBox.${H}
+	${CC} ${CFLAGS} -c AABBox.${C}
+
+Object.o: Object.${C} Object.${H}
+	${CC} ${CFLAGS} -c Object.${C}
+
 PolySurf.o:  PolySurf.${C} PolySurf.${H} Pixmap.${H} Vector.${H} Utility.${H}  MakeSpace.${H}
 	${CC} ${CFLAGS} -c PolySurf.${C}
+
+BIHTree.o: BIHTree.${C} BIHTree.${H}
+	${CC} ${CFLAGS} -c BIHTree.${C}
 
 Face.o:  Face.${C} Face.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H}
 	${CC} ${CFLAGS} -c Face.${C}
@@ -48,8 +63,8 @@ Line.o:  Line.${C} Line.${H} Vector.${H} Utility.${H} MakeSpace.${H}
 Group.o:  Group.${C} Group.${H} MakeSpace.${H}
 	${CC} ${CFLAGS} -c Group.${C}
 
-NewMaterial.o:  NewMaterial.${C} NewMaterial.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H}
-	${CC} ${CFLAGS} -c NewMaterial.${C}
+Material.o:  Material.${C} Material.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H}
+	${CC} ${CFLAGS} -c Material.${C}
 
 Pixmap.o:  Pixmap.${C} Pixmap.${H} 
 	${CC} ${CFLAGS} -c Pixmap.${C}
@@ -75,17 +90,11 @@ Camera.o: Camera.${C} Camera.${H}
 ViewScreen.o: ViewScreen.${C} ViewScreen.${H}
 	${CC} $(CFLAGS) -c ViewScreen.${C}
 
-Sphere.o: Sphere.${C} Sphere.${H}
-	${CC} $(CFLAGS) -c Sphere.${C}
-
 Light.o: Light.${C} Light.${H}
 	${CC} $(CFLAGS) -c Light.${C}
 
 PointLight.o: PointLight.${C} PointLight.${H}
 	${CC} $(CFLAGS) -c PointLight.${C}
-
-Material.o: Material.${C} Material.${H}
-	${CC} $(CFLAGS) -c Material.${C}
 
 ParallelLight.o: ParallelLight.${C} ParallelLight.${H}
 	${CC} $(CFLAGS) -c ParallelLight.${C}

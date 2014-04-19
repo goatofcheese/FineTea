@@ -1,25 +1,66 @@
-#ifndef RGBApixel_H
-#define RGBApixel_H
-#include "RGBApixel.h"
-#endif
+/*
+ *  Material.h
+ *  
+ *
+ *  Created by House on 9/8/08.
+ *  Copyright 2008 Clemson University. All rights reserved.
+ *
+ */
 
-#include <iostream>
+#ifndef _Material_H_
+#define _Material_H_
 
-class Material{
+#include "Color.h"
+#include "Pixmap.h"
 
-public:
-	Material(): color(), diffuse(1.0), specular(1.0){}
-	Material(const Material& m): color(m.color), diffuse(m.diffuse), specular(m.specular) {}
-	Material(RGBApixel col, double d, double s): color(col), diffuse(d), specular(s){}
+//
+// Basic structure for storing the shading information about a surface
+//
+struct Material{
+  char *name;
+  
+  Color a;
+  Color d;
+  Color s;
+  double exp;
+  double alpha;
 
-	friend std::ostream& operator <<(std::ostream& out, const Material&);
+  Color t;
+  double n;
 
-	RGBApixel getColor();
-	double getDiffuse();
-	double getSpecular();
+  int illum_model;
 
-private:
-	RGBApixel color;
-	double diffuse;
-	double specular;
+  Pixmap *amap;
+  Pixmap *dmap;
+  Pixmap *smap;
+  
+  unsigned int textureid;
+  
+  Material(char *mname = NULL);
+  Material(const Color &ambient, const Color &diffuse, const Color &specular, 
+	   double spexp);
+
+  ~Material(){};
+  
+  void setName(char *mname);
+  bool isNamed(char *mname);
+
+  void setProperties(const Color &ambient, const Color &diffuse, const Color &specular, 
+		     double spexp);
+  void setProperties(double ambient, double diffuse, double specular, 
+		     double spexp);
+  
+  void setK(int ktype, const Color &c);
+  void setTransmission(const Color &c);
+  void setExp(double spexp);
+  void setAlpha(double alfa);
+  void setIOR(double ior);
+  void setIllum(int i);
+  void setMap(int mtype, Pixmap *p);
+
+  void createTexture();
+
+  friend ostream& operator<< (ostream& os, const Material& m);
 };
+
+#endif

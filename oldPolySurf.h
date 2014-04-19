@@ -7,18 +7,19 @@
  *
  */
 
-#ifndef __H_POLYSURF__
-#define __H_POLYSURF__
+#ifndef __POLYSURF__
+#define __POLYSURF__
 
-#include "Object.h"
 #include "Vector.h"
-#include "Pixmap.h"
 #include "Face.h"
 #include "Line.h"
 #include "Group.h"
-#include "Material.h"
+#include "NewMaterial.h"
+#ifndef Object_H
+#define Object_H
+#include "Object.h"
+#endif
 
-class BIHTree;
 
 class PolySurf: public Object{
 private:
@@ -37,48 +38,32 @@ private:
   int ngroups, maxgroups;
   Group *groups;
   int nmaterials, maxmaterials;
-  Material *materials;
+  NewMaterial *materials;
 
-  BIHTree *bihtree;
-  
+  int lastHitFace;
+
 public:
   PolySurf();
   ~PolySurf();
   
   void addVertex(const Vector3d &v);
-  int NVertices(){return nverts;}
-  Vector3d *Vertices(){return verts;}
-  
   void addNormal(const Vector3d &n);
-  int NNormals(){return nnorms;}
-  Vector3d *Normals(){return norms;}
-  
   void addUV(const Vector2d &u);
-  int NUVs(){return nuvs;}
-  Vector2d *UVs(){return uvs;}
 
   void addPoint(int p);
-  int NPoints(){return npoints;}
-  int *Points(){return points;}
-  
+
   int newFace(int g, int m);
   void addFaceVert(int f, int v, int n = -1, int u = -1);
-  void setFaceNormal(int f);
-  int NFaces(){return nfaces;}
-  Face *Faces(){return faces;}
-  
+
   int newLine();
   void addLinePoint(int l, int p);
-  int NLines(){return nlines;}
-  Line *Lines(){return lines;}
   
   int setGroup(char *gname);
   void addFaceGroup(int f, int g);
-  int NGroups(){return ngroups;}
-  Group *Groups(){return groups;}
   
   int newMaterial(char *mname);
-  int idxMaterial(char *mname);  
+  int idxMaterial(char *mname);
+
   void setMaterialK(int m, int k, const Color &c);
   void setMaterialTransmission(int m, const Color &c);
   void setMaterialAlpha(int m, double alfa);
@@ -86,15 +71,20 @@ public:
   void setMaterialIOR(int m, double ior);
   void setMaterialIllum(int m, int n);
   void setMaterialMap(int m, int mtype, Pixmap *p);
-  void addFaceMaterial(int f, int m);
-  int NMaterials(){return nmaterials;}
-  Material *Materials(){return materials;}
-  
-  void BuildBIHTree();
 
-  Collision RayCollide(const Ray &r) const;
+  void addFaceMaterial(int f, int m);
+
+  Vector3d Centroid();
+  Vector3d MinBBox();
+  Vector3d MaxBBox();
   
-  friend ostream& operator<<(ostream& os, const PolySurf& ps);
+  void DrawPoints();
+  void Draw(int wireframe);
+
+  RayHit hits(Vector3d ur, Vector3d base, Vector3d& point);
+  NewMaterial getMaterial(RayHit r) ;
+  
+  friend ostream& operator<< (ostream& os, const PolySurf& ps);
 };
 
 #endif
