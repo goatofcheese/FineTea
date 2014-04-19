@@ -228,53 +228,56 @@ int OBJFile::processl(char *line){
 }
 
 int OBJFile::processf(char *line){
-  int idx[3];	      // vertex index, texture index, normal index
-  int faceidx;
+	int idx[3];	      // vertex index, texture index, normal index
+	int faceidx, quadfaceidx;
+	int fcount = 0;
 
-  if(strlen(line) < 7 || !isspace(line[1])){	  // f n n n
-    errmsg("Invalid face format");
-    return 1;
-  }
+	if(strlen(line) < 7 || !isspace(line[1])){	  // f n n n
+		errmsg("Invalid face format");
+		return 1;
+	}
   
-  faceidx = psurf->newFace(groupno, materialno);
-  psurf->addFaceGroup(faceidx, groupno);
+	faceidx = psurf->newFace(groupno, materialno);
+	psurf->addFaceGroup(faceidx, groupno);
 
-  idx[0] = idx[1] = idx[2] = 0;
-  for(int i = 1, j = 0; i < strlen(line); i++){
-    if(isspace(line[i])){
-      if(i > 1){
-			if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
-			  errmsg("Invalid vertex index");
-			  return 3;
+	idx[0] = idx[1] = idx[2] = 0;
+	for(int i = 1, j = 0; i < strlen(line); i++){
+		if(isspace(line[i])){
+			if(i > 1){
+				if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
+					errmsg("Invalid vertex index");
+					return 3;
+				}
+				psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
+				fcount++;
+      	}
+      	idx[0] = idx[1] = idx[2] = 0;
+      	j = 0;
+		}
+		else if(line[i] == '/'){
+			j++;
+			if(j > 2){
+				errmsg("Invalid /");
+				return 4;
 			}
-			psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
-      }
-      idx[0] = idx[1] = idx[2] = 0;
-      j = 0;
-    }
-    else if(line[i] == '/'){
-      j++;
-      if(j > 2){
-	errmsg("Invalid /");
-	return 4;
-      }
-    }
-    else if(!isdigit(line[i])){
-      errmsg("Invalid index");
-      return 2;
-    }
-    else
-      idx[j] = 10 * idx[j] + line[i] - '0';
-  }
+		}
+		else if(!isdigit(line[i])){
+			errmsg("Invalid index");
+			return 2;
+		}
+		else
+			idx[j] = 10 * idx[j] + line[i] - '0';
+	}
   
-  if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
-    errmsg("Invalid vertex index");
-    return 3;
-  }
+	if(idx[0] <= 0 || idx[1] < 0 || idx[2] < 0){
+		errmsg("Invalid vertex index");
+		return 3;
+	}
 
-  psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
-  psurf->setFaceNormal(faceidx);
-  return 0;
+	psurf->addFaceVert(faceidx, idx[0] - 1, idx[2] - 1, idx[1] - 1);
+	psurf->setFaceNormal(faceidx);
+
+	return 0;
 }
 
 int OBJFile::processg(char *line){

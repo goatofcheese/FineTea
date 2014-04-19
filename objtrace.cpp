@@ -91,7 +91,6 @@ Collision shoot(Ray r, vector<Object*> scene){
 	closest.t = INFINITY;
 	for(long l = 0; l < scene.size(); l++){
 		col = scene.at(l)->RayCollide(r);			
-		//std::cout << col << std::endl;
 		if(col.t != INFINITY)
 		{	
 			if(closest.objectid == -1 || ((col.x - r.p).norm() < (closest.x - r.p).norm())){
@@ -117,19 +116,15 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 	int ui, vi;
 
 	if(mat.amap){
-		ui = mat.amap[0].NCols() * col.uv[0];
-		vi = mat.amap[0].NRows() * col.uv[1];
-		if(ui >= mat.amap[0].NCols()) ui--;
-		if(vi >= mat.amap[0].NCols()) vi--;
+		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
+		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
 		ambient[0] = (double)mat.amap[0][vi][ui][0] / 255;
 		ambient[1] = (double)mat.amap[0][vi][ui][1] / 255;
 		ambient[2] = (double)mat.amap[0][vi][ui][2] / 255;
 	}
 	if(mat.dmap){
-		ui = mat.dmap[0].NCols() * col.uv[0];
-		vi = mat.dmap[0].NRows() * col.uv[1];
-		if(ui >= mat.dmap[0].NCols()) ui--;
-		if(vi >= mat.dmap[0].NCols()) vi--;
+		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NRows();
+		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
 		diffuse[0] = (double)mat.dmap[0][vi][ui][0] / 255;
 		diffuse[1] = (double)mat.dmap[0][vi][ui][1] / 255;
 		diffuse[2] = (double)mat.dmap[0][vi][ui][2] / 255;
@@ -316,13 +311,15 @@ int main(int argc, char* argv[]){
 	uy = uz % ux;
 
 	//Arrange Lights
-	Vector3d lightpos(3, 0, 0);
+	//cube Vector3d lightpos(3, 0, 0);
+	Vector3d lightpos(20, 0, 0);
 	Color lightcol(0.8, 0.8, 0.2, 1.);
-	std::vector<Light*> lights(4);
+	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);
-	lights.at(1) = new PointLight(lightcol, Vector3d(-3.0, 0.9, -5));
-	lights.at(2) = new PointLight(Color(0.4, 0.4, 0.2, 1), Vector3d(0, 3, 0));
-	lights.at(3) = new PointLight(lightcol, Vector3d(-3, 0, 3));
+	lights.at(1) = new PointLight(lightcol, Vector3d(-20.0, 0.9, -5));
+	lights.at(2) = new PointLight(Color(0.4, 0.4, 0.2, 1), Vector3d(0, 20, 0));
+	lights.at(3) = new PointLight(lightcol, Vector3d(-20, -20, 20));
+	lights.at(4) = new PointLight(lightcol, Vector3d(20, -22, 18));
 
 	//shoot a ray through each pixel	
 	center = (pin + (cam->getDir() * cam->getFocalDistance()));
@@ -346,7 +343,9 @@ int main(int argc, char* argv[]){
 				Vector3d p = center + ((px + rx) * ux) + ((py + ry) * uy);
 				//if orthographic, shoot ray perpendicular to screen
 				if(orthographic){
-					ur = cam->getDir();
+					ur = cam->getDir().normalize();
+					std::cout<< ur << std::endl;
+					pin = p;
 				}
 				else{
 					ur = (p - pin).normalize();

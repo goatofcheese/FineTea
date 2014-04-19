@@ -96,6 +96,12 @@ Collision Face::RayCollide(const Ray &r, PolySurf *p) const{
   
   c.x = r.X(c.t);	// location of hit on plane of the face
   c.n = normal;		// normal to the face
+
+  //if vertex normals are given
+ // if(faceverts[0].n != -1 && faceverts[1].n != -1 && faceverts[2].n != -1){
+ //   
+ // }
+
   if(material < 0)
 	c.m = &defaultmaterial;
   else
@@ -136,10 +142,10 @@ Collision Face::TriCollide(const Collision &c, FaceVert triverts[3], PolySurf *p
 	return ctri;
   }
 
-  if(triverts[0].n != -1)
+ /* if(triverts[0].n != -1)
 	ctri.n = (u * p->Normals()[triverts[0].n] + v * p->Normals()[triverts[1].n] + 
 			  w * p->Normals()[triverts[2].n]).normalize();
-
+*/
   if(triverts[0].u != -1)
 	ctri.uv = u * p->UVs()[triverts[0].u] + v * p->UVs()[triverts[1].u] + 
 			w * p->UVs()[triverts[2].u];
