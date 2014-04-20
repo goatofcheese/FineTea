@@ -103,6 +103,7 @@ static double DRAWHEIGHT = 15;
 static double NEAR = 1;
 static double FAR = 100;
 static double DEPTH = -10;
+static double WORLDWIDTH;
 
 // Viewing parameters
 static int Projection;
@@ -178,15 +179,20 @@ void updateProjection(){
 	glLoadIdentity();
 	
 	// determine the projection system and drawing coordinates
-	if(Projection == ORTHO)
+	if(Projection == ORTHO){
 		glOrtho(-DRAWWIDTH/2, DRAWWIDTH/2, -DRAWHEIGHT/2, DRAWHEIGHT/2, NEAR, FAR);
+		WORLDWIDTH = DRAWWIDTH;
+	}
 	else{
 		// scale drawing coords so center of cube is same size as in ortho
 		// if it is at its nominal location
 		double scale = fabs((double)NEAR / (double)DEPTH);
 		double xmax = scale * DRAWWIDTH / 2;
 		double ymax = scale * DRAWHEIGHT / 2;
+		cout<< "xmax: " << xmax << std::endl;
+		cout<< "ymax: " << ymax << std::endl;
 		glFrustum(-xmax, xmax, -ymax, ymax, NEAR, FAR);
+		WORLDWIDTH = 2. * xmax;
 	}
   
 	// restore modelview matrix as the one being updated
@@ -387,7 +393,7 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, !Projection);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
@@ -505,7 +511,7 @@ void initialize(){
 	//DEPTH = propor / -4.;
 
 	//Make camera
-	cam = new Camera(Vector3d(0.,0.,40.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+	cam = new Camera(Vector3d(0.,0.,10.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,

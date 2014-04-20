@@ -10,7 +10,7 @@ Usage:
 #include "objtrace.h"
 
 //globals
-int Width = 500, Height = 400;
+int Width = 800, Height = 600;
 ImageFile *img;
 Pixmap *pixmap = NULL;
 std::string sn;
@@ -199,7 +199,7 @@ vector<Object*> buildScene(PolySurf *p){
 }
 
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho){
 
 	sn = svn;
 	wfe = wFileExists;
@@ -224,10 +224,9 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	up = new Vector3d(d1,d2,d3);
 	attributes >> d1 >> d2 >> d3;	
 	attributes >> view;
-	if(view == 'l')
-		orthographic = true;
-	else if(view == 'v')
-		orthographic = false;
+
+
+	orthographic = ortho;
 
 
 	//Adjust pixel height accordinglly
@@ -237,7 +236,7 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	std::cout<< *cam << std::endl;
 	cam = c;
 	std::cout<< *cam << std::endl;
-	ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
+	//ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
 	pixmap = new Pixmap(Height, Width);
 	if(wFileExists)
 		img->setpixmap(pixmap);
@@ -255,17 +254,19 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	
 	//raycast
 	int i, rows, j, cols, count=0;
-	double ph, pw, rx, ry, rz, pz, py, px;
+	double ph, pw, rx, ry, rz, pz, py, px, ww, wh;
 	Vector3d center, pin, ux, uy, uz, ur, hit, base;
 	Collision closest;
 	unsigned char r, g, b, a;
 	RGBApixel color;
 
 	pin = cam->getPinhole();
-	rows = vs->getPheight();
-	cols = vs->getPwidth();
-	ph = vs->getWheight() / double(rows);
-	pw = vs->getWwidth() / double(cols);
+	ww = worldwidth;
+	wh = ww/d2;
+	rows = Height;
+	cols = Width;
+	ph = wh / double(rows);
+	pw = ww / double(cols);
 
 	//Orient camera	
 	//uz = -d from c
@@ -292,9 +293,9 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 
 	pz = -1. * cam->getFocalDistance();
 	for(i =0; i < rows; i++){
-		py = (vs->getWheight() / -2.) + (ph * (i + 0.5));
+		py = (wh / -2.) + (ph * (i + 0.5));
 		for(j = 0; j < cols; j++){
-			px = (vs->getWwidth() / -2.) + (pw * (j + 0.5));
+			px = (ww / -2.) + (pw * (j + 0.5));
 			int n;
 			//supersampling loop
 			Color vcol(0.,0.,0.,1.);
