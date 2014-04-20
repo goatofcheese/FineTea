@@ -7,38 +7,19 @@ Usage:
 	objtrace objfile.obj nrays imagefile.ext
 */
 
-#include "Matrix.h"
-#include "Camera.h"
-#include "ViewScreen.h"
-#include "PointLight.h"
-#include "ParallelLight.h"
-#include "ImageFile.h"
-#include "Color.h"
-#include "Material.h"
-#include "PolySurf.h"
-#include "OBJFile.h"
-#include <vector>
-#include <GL/glut.h>
-#include <iostream>
-#include <ostream>
-#include <fstream>
-#include <string>
-#include <string.h>
-#include <math.h>
+#include "objtrace.h"
 
 //globals
-int Width = 500, Height = 400;
-ImageFile *image = NULL;
+int Width = 800, Height = 600;
+ImageFile *img;
 Pixmap *pixmap = NULL;
-std::string saveName;
-bool wFileExists = false;
+std::string sn;
+bool wfe;
 bool orthographic = false;
-int Nrays = 1;
-OBJFile objfile;
 Color black;
 int MAX_RECURSION_LEVEL = 8;
 
-void drawScreen(){
+void drawScreen2(){
 	
 	//clear to black
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -52,7 +33,7 @@ void drawScreen(){
 	glutSwapBuffers();
 }
 
-void handleKey(unsigned char key, int x, int y){
+void handleKey2(unsigned char key, int x, int y){
 	string prompt;
 	switch(key){
 		case 'Q':
@@ -61,8 +42,8 @@ void handleKey(unsigned char key, int x, int y){
 			break;
 		case 'W':
 		case 'w':
-			if(wFileExists)
-				image->write(saveName.c_str());
+			if(wfe)
+				img->write(sn.c_str());
 			break;
 		default:
 			return;
@@ -89,6 +70,7 @@ Collision shoot(Ray r, vector<Object*> scene){
 	closest.objectid = -1;
 	closest.t = INFINITY;
 	for(long l = 0; l < scene.size(); l++){
+		
 		col = scene.at(l)->RayCollide(r);			
 		if(col.t != INFINITY)
 		{
@@ -209,41 +191,20 @@ Color recShade(Ray r, Collision col, int level, vector<Object*> scene, vector<Li
 	return color;
 }
 
-vector<Object*> buildScene(){
+vector<Object*> buildScene(PolySurf *p){
 
 	std::vector<Object*> scene(1);
-	objfile.read();
-	scene.at(0) = objfile.getscene();
+	scene.at(0) = (Object*) p;
 	return scene;
 }
 
 
-int main(int argc, char* argv[]){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho){
 
-	int suffix;
-	//parse command line arguments
-	switch(argc){
-		case 4:
-			image = new ImageFile();
-			saveName = argv[3];
-			wFileExists = true;
-		case 3:
-			Nrays = atoi(argv[2]);
-		case 2:
-			suffix = strlen(argv[1]) - 4;
-			if(strcmp(&(argv[1][suffix]), ".obj") != 0){
-				std::cerr<< "Invalid file suffix: " << suffix << std::endl;
-				exit(1);
-			}
-			objfile.setfilename(argv[1]);
-			break;
-		case 1:
-		default:
-			std::cerr<< "invalid number of arguments "<< std::endl;
-			exit(-1);
-			break;
-	}
+	sn = svn;
+	wfe = wFileExists;
 
+	img = imageFile;
 	/* read in camera attributes */
 	double d1, d2, d3;
 	char view;
@@ -253,6 +214,7 @@ int main(int argc, char* argv[]){
 		std::cerr<< "Could not open attributes file" <<std::endl;
 		exit(-1);
 	}
+
 	attributes >> d1 >> d2 >> d3;	
 	viewpoint = new Vector3d(d1,d2,d3);
 	attributes >> d1 >> d2 >> d3;	
@@ -262,46 +224,49 @@ int main(int argc, char* argv[]){
 	up = new Vector3d(d1,d2,d3);
 	attributes >> d1 >> d2 >> d3;	
 	attributes >> view;
-	if(view == 'l')
-		orthographic = true;
-	else if(view == 'v')
-		orthographic = false;
+
+
+	orthographic = ortho;
 
 
 	//Adjust pixel height accordinglly
 	Height = Width/d2;
 	
 	Camera *cam = new Camera(*viewpoint, *face, *up, d1);
-	ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
+	std::cout<< *cam << std::endl;
+	cam = c;
+	std::cout<< *cam << std::endl;
+	//ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
 	pixmap = new Pixmap(Height, Width);
 	if(wFileExists)
-		image->setpixmap(pixmap);
+		img->setpixmap(pixmap);
 
 	// initialize default colors
 	black = Color(0.0, 0.0, 0.0, 1.);
 
 	//start up display
 	Magick::InitializeMagick(*argv);
-	glutInit(&argc, argv);
 	startgraphics(Width, Height);
 
 	//construct scene
 	PolySurf *object;
-	std::vector<Object*> scene = buildScene();
+	std::vector<Object*> scene = buildScene(p);
 	
 	//raycast
 	int i, rows, j, cols, count=0;
-	double ph, pw, rx, ry, rz, pz, py, px;
+	double ph, pw, rx, ry, rz, pz, py, px, ww, wh;
 	Vector3d center, pin, ux, uy, uz, ur, hit, base;
 	Collision closest;
 	unsigned char r, g, b, a;
 	RGBApixel color;
 
 	pin = cam->getPinhole();
-	rows = vs->getPheight();
-	cols = vs->getPwidth();
-	ph = vs->getWheight() / double(rows);
-	pw = vs->getWwidth() / double(cols);
+	ww = worldwidth;
+	wh = ww/d2;
+	rows = Height;
+	cols = Width;
+	ph = wh / double(rows);
+	pw = ww / double(cols);
 
 	//Orient camera	
 	//uz = -d from c
@@ -328,9 +293,9 @@ int main(int argc, char* argv[]){
 
 	pz = -1. * cam->getFocalDistance();
 	for(i =0; i < rows; i++){
-		py = (vs->getWheight() / -2.) + (ph * (i + 0.5));
+		py = (wh / -2.) + (ph * (i + 0.5));
 		for(j = 0; j < cols; j++){
-			px = (vs->getWwidth() / -2.) + (pw * (j + 0.5));
+			px = (ww / -2.) + (pw * (j + 0.5));
 			int n;
 			//supersampling loop
 			Color vcol(0.,0.,0.,1.);
@@ -374,10 +339,10 @@ int main(int argc, char* argv[]){
 	}
 	
 	std::cout<< "count: " << count << std::endl;
-	glutDisplayFunc(drawScreen);
-	glutKeyboardFunc(handleKey);
+	glutDisplayFunc(drawScreen2);
+	glutKeyboardFunc(handleKey2);
 	glutMainLoop();
 
  
-  return 0; 
+  return;
 }
