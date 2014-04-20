@@ -37,6 +37,7 @@
 #include "ImageFile.h"
 #include "PolySurf.h"
 #include "OBJFile.h"
+#include <malloc.h>
 
 using namespace std;
 
@@ -59,13 +60,6 @@ using namespace std;
 #define PERSPECTIVE	1
 
 #define NONE		-1	// used to indicate no mouse button pressed
-
-#define DRAWWIDTH	20	// view volume sizes (note: width and
-#define DRAWHEIGHT	15	//   height should be in same ratio as window)
-#define NEAR		1	// distance of near clipping plane
-#define FAR		100	// distance of far clipping plane
-
-#define DEPTH		-10	// initial z coord. of center of cube
 
 #define ROTFACTOR	0.2     // degrees rotation per pixel of mouse movement
 #define XLATEFACTOR	0.1     // units of translation per pixel of mouse movement
@@ -99,9 +93,14 @@ float white[3] = {1, 1, 1};
 // Global variables updated and shared by callback routines
 //
 
-// Window dimensions
+// Dimensions
 static double Width = WIDTH;
 static double Height = HEIGHT;
+static double DRAWWIDTH = 20;
+static double DRAWHEIGHT = 15;
+static double NEAR = 1;
+static double FAR = 100;
+static double DEPTH = -10;
 
 // Viewing parameters
 static int Projection;
@@ -122,7 +121,6 @@ static int Button = NONE;
 
 // global variables to track wireframe/shaded mode, material color, and textuing mode
 static int Wireframe;
-static int Color;
 static int SmoothShading;
 static int TextureMode;
 static int ColorMode;
@@ -205,20 +203,8 @@ void drawModel(int wireframe){
 		glColor3f(white[0], white[1], white[2]);
 		glLineWidth(2);
 	}
-	else{
+/*	else{
 		// set up material color to be white
-		for(int i = 0; i < 3; i++){
-			ambient_color[i] = AMBIENT_FRACTION * white[i];
-			diffuse_color[i] = DIFFUSE_FRACTION * white[i];
-			specular_color[i] = SPECULAR_FRACTION * white[i];
-			shininess = 60;
-		}
-    
-		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
-	   	glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
-		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-    	
 		std::cout<< "TextureMode: "<< TextureMode<< std::endl;
 		if(TextureMode != NOTEXTURE){
 			glEnable(GL_TEXTURE_2D);
@@ -240,6 +226,7 @@ void drawModel(int wireframe){
 			}
 		}
 	}
+*/
 
 
 	//Draw the PolySurf
@@ -250,7 +237,13 @@ void drawModel(int wireframe){
 		//ith face
 		Face curFace = psurf->Faces()[i];
 		// set up material color
-		Material curMat = psurf->Materials()[curFace.material];
+		Material curMat;
+		if(curFace.material != -1)
+			curMat = psurf->Materials()[curFace.material];
+		else{
+			Color w(1.,1.,1.,1.);
+			curMat = Material(w, w, w, 100);
+		}
 		for(int k = 0; k < 3; k++){
 			ambient_color[k] = AMBIENT_FRACTION * curMat.a[k];
 			diffuse_color[k] = DIFFUSE_FRACTION * curMat.d[k];
@@ -276,10 +269,36 @@ void drawModel(int wireframe){
 				}
 				//texture
 				bool hasTextureCoords = (psurf->Faces()[i].faceverts[j].u != -1);
-				if(hasTextureCoords){
+			/*	if(hasTextureCoords && !wireframe){
+					glEnable(GL_TEXTURE_2D);
+					glGenTextures(1, &TextureID); // OpenGL ID for this texture
+					glBindTexture(GL_TEXTURE_2D, TextureID);
+					std::cerr<< (curMat.dmap->NCols() * curMat.dmap->NRows())<< std::endl;
+					std::cerr<< malloc_usable_size(curMat.dmap->Pixels())<< std::endl;
+					//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, curMat.dmap->NCols(), curMat.dmap->NRows(),		    
+					//    GL_RGBA, GL_UNSIGNED_BYTE, (void*)(curMat.dmap->Pixels()));  
+					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, ColorMode);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+std::cerr << TextureMode << std::endl;
+					switch(TextureMode){
+						case NEARTEXTURE:
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+							break;
+						case LINEARTEXTURE:
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+							break;
+						case MIPMAPTEXTURE:
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+							break;
+					}
 					Vector2d vertUV = psurf->UVs()[curFace.faceverts[j].u];
+					std::cout<< vertUV<< std::endl;
 					glTexCoord2f(vertUV[0], vertUV[1]);
-				}
+				}*/
 				//draw the vertex
 				Vector3d curVert = psurf->Vertices()[curFace.faceverts[j].v];
 				glVertex3f(curVert[0], curVert[1], curVert[2]);
@@ -314,16 +333,40 @@ void doDisplay(){
 	glLightfv(GL_LIGHT0, GL_AMBIENT, WHITE);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, WHITE);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, WHITE);
-  
+
 	// establish camera coordinates
 	glRotatef(Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
 	glRotatef(Pan, 0, 1, 0);	    // pan - rotate camera about y axis
 	glTranslatef(0, 0, Approach);     // approach - translate camera along z axis
+
   
 	// rotate the model
 	glRotatef(ThetaY, 0, 1, 0);       // rotate model about x axis
 	glRotatef(ThetaX, 1, 0, 0);       // rotate model about y axis
 	
+	GLfloat mv[16];
+	GLfloat pj[16];
+	glGetFloatv (GL_MODELVIEW_MATRIX, mv);
+	glGetFloatv (GL_PROJECTION_MATRIX, pj);
+
+	//opengl is column major, matrix library row major
+	Matrix4x4 m4(mv[0], mv[4], mv[8], mv[12],
+					 mv[1], mv[5], mv[9], mv[13],
+					 mv[2], mv[6], mv[10], mv[14],
+					 mv[3], mv[7], mv[11], mv[15]);
+	Vector4d cam(0., 0., -1., 1.);
+	cam = m4 * cam;
+	std::cout<< cam << std::endl;
+//	for(int q=0; q<16;++q) std::cout << mv[q] << std::endl;
+	std::cout << std::endl;
+	Matrix4x4 m42(pj[0], pj[4], pj[8], pj[12],
+					 pj[1], pj[5], pj[9], pj[13],
+					 pj[2], pj[6], pj[10], pj[14],
+					 pj[3], pj[7], pj[11], pj[15]);
+	Vector4d cam2(0., 0., 0., 1.);
+	cam2 = m42 * cam2;
+//	std::cout<< cam2 << std::endl;
+
 	// draw the model in wireframe or solid
 	drawModel(Wireframe);
     
@@ -477,12 +520,13 @@ void initialize(){
 	//read in OBJFile
 	objfile.read(); 
  
-	//
-	// create the texture map image and assign a texture ID
-	//
-	
 	psurf = objfile.getscene();
-
+	double propor = (psurf->GetBBox().bounds[1] - psurf->GetBBox().bounds[0]).norm();
+	std::cerr<< "propor: "<< propor << std::endl;
+	//DRAWWIDTH = propor;
+	//DRAWHEIGHT = DRAWWIDTH / (Height/Width);
+	//DEPTH = propor / -4.;
+	std::cout<< "\n";
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
 	//	       0, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage);  
@@ -517,7 +561,6 @@ int main(int argc, char* argv[]){
 			break;
 	}
 
- 
 	// start up the glut utilities
 	glutInit(&argc, argv);
   
