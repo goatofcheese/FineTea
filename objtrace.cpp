@@ -196,7 +196,7 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 		ambient = ((1 - alpha) * ambient + (alpha * mapcolor));
 	}
 	if(mat.dmap){
-		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NRows();
+		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NCols();
 		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
 		alpha = ((float)mat.dmap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.dmap[0][vi][ui][0] / 255.,
