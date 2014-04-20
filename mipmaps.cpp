@@ -197,38 +197,6 @@ void drawModel(int wireframe){
 	float specular_color[4];
 	int shininess;
 
-	if(wireframe){
-		glDisable(GL_TEXTURE_2D);    
-		// set drawing color to current hue, and draw with thicker wireframe lines
-		glColor3f(white[0], white[1], white[2]);
-		glLineWidth(2);
-	}
-/*	else{
-		// set up material color to be white
-		std::cout<< "TextureMode: "<< TextureMode<< std::endl;
-		if(TextureMode != NOTEXTURE){
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, ColorMode);
-			glBindTexture(GL_TEXTURE_2D, TextureID);	    // set the active texture
-			switch(TextureMode){
-				case NEARTEXTURE:
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					break;
-				case LINEARTEXTURE:
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-					break;
-				case MIPMAPTEXTURE:
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-					break;
-			}
-		}
-	}
-*/
-
-
 	//Draw the PolySurf
 	int i, j;
 	bool hasVectorNormals = (psurf->Faces()[0].faceverts[0].n != -1);
@@ -252,8 +220,55 @@ void drawModel(int wireframe){
 		}
 		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
-	   	glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
+	   glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+		std::cout<< "BUBUBUBUBUBU"<< std::endl;
+
+		if(curMat.dmap){
+			glGenTextures(1, &TextureID);		  // get OpenGL ID for this texture
+			std::cerr<< "TextureID in init: " << TextureID<< std::endl;			
+			// make this texture the active texture
+			glBindTexture(GL_TEXTURE_2D, TextureID);	
+
+			// set texture drawing parameters
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	
+			// build mipmap in texture memory
+			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, curMat.dmap->NCols(), curMat.dmap->NRows(), GL_RGBA, GL_UNSIGNED_BYTE, curMat.dmap->Pixels());	
+
+			std::cout<< "BUBUBUBUBUBU"<< std::endl;
+		}
+
+		if(wireframe){	
+			glDisable(GL_TEXTURE_2D);    
+			// set drawing color to current hue, and draw with thicker wireframe lines
+			glColor3f(white[0], white[1], white[2]);
+			glLineWidth(2);
+		}
+		else{
+			// set up material color to be white
+			if(TextureMode != NOTEXTURE){
+				glEnable(GL_TEXTURE_2D);
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, ColorMode);
+				glBindTexture(GL_TEXTURE_2D, TextureID);	    // set the active texture
+				switch(TextureMode){
+					case NEARTEXTURE:
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+						break;
+					case LINEARTEXTURE:
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+						break;
+					case MIPMAPTEXTURE:
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+						break;
+				}
+			}
+		}
+
  
 	 	//if no vertex normals defined, use face normal
 		if(!hasVectorNormals)
@@ -267,38 +282,13 @@ void drawModel(int wireframe){
 					Vector3d vertNorm = psurf->Normals()[curFace.faceverts[j].n];
 					glNormal3f(vertNorm[0], vertNorm[1], vertNorm[2]);
 				}
-				//texture
+				//texture coords
 				bool hasTextureCoords = (psurf->Faces()[i].faceverts[j].u != -1);
-			/*	if(hasTextureCoords && !wireframe){
-					glEnable(GL_TEXTURE_2D);
-					glGenTextures(1, &TextureID); // OpenGL ID for this texture
-					glBindTexture(GL_TEXTURE_2D, TextureID);
-					std::cerr<< (curMat.dmap->NCols() * curMat.dmap->NRows())<< std::endl;
-					std::cerr<< malloc_usable_size(curMat.dmap->Pixels())<< std::endl;
-					//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, curMat.dmap->NCols(), curMat.dmap->NRows(),		    
-					//    GL_RGBA, GL_UNSIGNED_BYTE, (void*)(curMat.dmap->Pixels()));  
-					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, ColorMode);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-std::cerr << TextureMode << std::endl;
-					switch(TextureMode){
-						case NEARTEXTURE:
-							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-							break;
-						case LINEARTEXTURE:
-							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-							break;
-						case MIPMAPTEXTURE:
-							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-							break;
-					}
+				if(hasTextureCoords){
 					Vector2d vertUV = psurf->UVs()[curFace.faceverts[j].u];
 					std::cout<< vertUV<< std::endl;
 					glTexCoord2f(vertUV[0], vertUV[1]);
-				}*/
+				}
 				//draw the vertex
 				Vector3d curVert = psurf->Vertices()[curFace.faceverts[j].v];
 				glVertex3f(curVert[0], curVert[1], curVert[2]);
@@ -356,7 +346,7 @@ void doDisplay(){
 					 mv[3], mv[7], mv[11], mv[15]);
 	Vector4d cam(0., 0., -1., 1.);
 	cam = m4 * cam;
-	std::cout<< cam << std::endl;
+//	std::cout<< cam << std::endl;
 //	for(int q=0; q<16;++q) std::cout << mv[q] << std::endl;
 	std::cout << std::endl;
 	Matrix4x4 m42(pj[0], pj[4], pj[8], pj[12],
@@ -522,11 +512,10 @@ void initialize(){
  
 	psurf = objfile.getscene();
 	double propor = (psurf->GetBBox().bounds[1] - psurf->GetBBox().bounds[0]).norm();
-	std::cerr<< "propor: "<< propor << std::endl;
 	//DRAWWIDTH = propor;
 	//DRAWHEIGHT = DRAWWIDTH / (Height/Width);
 	//DEPTH = propor / -4.;
-	std::cout<< "\n";
+
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
 	//	       0, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage);  

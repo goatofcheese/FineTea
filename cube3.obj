@@ -33,7 +33,7 @@
     f 8 7 6 
     f 8 6 5
     g right
-    usemtl red
+    usemtl green_flag
     f 4 3 7 
     f 4 7 8
     g top
