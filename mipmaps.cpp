@@ -39,6 +39,7 @@
 #include "OBJFile.h"
 #include <map>
 #include <malloc.h>
+#include "objtrace.h"
 
 using namespace std;
 
@@ -138,6 +139,8 @@ bool wFileExists = false;
 int Nrays = 1;
 OBJFile objfile;
 PolySurf *psurf;
+Camera *cam;
+char **args;
 
 //
 // Routine to initialize the state of the program to start-up defaults
@@ -381,6 +384,11 @@ void handleKey(unsigned char key, int x, int y){
 		case 'Q':
 		case ESC:
 			exit(0);
+
+		case 'r':
+		case 'R':
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam);
+			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
 		case 'S':
@@ -496,6 +504,9 @@ void initialize(){
 	//DRAWHEIGHT = DRAWWIDTH / (Height/Width);
 	//DEPTH = propor / -4.;
 
+	//Make camera
+	cam = new Camera(Vector3d(0.,0.,40.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
 	//	       0, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage);  
@@ -530,6 +541,7 @@ int main(int argc, char* argv[]){
 			break;
 	}
 
+	args = argv;
 	// start up the glut utilities
 	glutInit(&argc, argv);
   

@@ -13,8 +13,8 @@ else
   endif
 endif
 
-HFILES = File.${H} OBJFile.${H} MTLFile.${H} ImageFile.${H} Ray.${H} Collision.${H} AABBox.${H} Object.${H} PolySurf.${H} BIHTree.${H} Face.${H} Line.${H} Group.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H} MakeSpace.${H} Camera.${H} ViewScreen.${H} Light.${H} PointLight.${H} Material.${H} ParallelLight.${H} Matrix.${H}
-OFILES = File.o OBJFile.o MTLFile.o ImageFile.o Ray.o AABBox.o Object.o PolySurf.o BIHTree.o Face.o Line.o Group.o Pixmap.o Color.o Vector.o Utility.o Camera.o ViewScreen.o Light.o PointLight.o Material.o ParallelLight.o Matrix.o
+HFILES = objtrace.${H} File.${H} OBJFile.${H} MTLFile.${H} ImageFile.${H} Ray.${H} Collision.${H} AABBox.${H} Object.${H} PolySurf.${H} BIHTree.${H} Face.${H} Line.${H} Group.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H} MakeSpace.${H} Camera.${H} ViewScreen.${H} Light.${H} PointLight.${H} Material.${H} ParallelLight.${H} Matrix.${H}
+OFILES = objtrace.o File.o OBJFile.o MTLFile.o ImageFile.o Ray.o AABBox.o Object.o PolySurf.o BIHTree.o Face.o Line.o Group.o Pixmap.o Color.o Vector.o Utility.o Camera.o ViewScreen.o Light.o PointLight.o Material.o ParallelLight.o Matrix.o
 
 PROJECT = mipmaps
 
@@ -23,6 +23,9 @@ ${PROJECT}:	${PROJECT}.o ${OFILES}
 
 ${PROJECT}.o: ${PROJECT}.${C} ${HFILES}
 	${CC} ${CFLAGS} -c ${PROJECT}.${C}
+
+objtrace.o: objtrace.${C} objtrace.${H}
+	${CC} ${CFLAGS} -c objtrace.${C}
 
 File.o:  File.${C} File.${H}
 	${CC} ${CFLAGS} -c File.${C}

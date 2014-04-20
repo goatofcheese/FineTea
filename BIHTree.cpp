@@ -54,7 +54,6 @@ Collision BIHNode::RayCollide(const Ray &r, float tmin, float tmax, Faceptr face
 	}
 	return cl;
   }
-  
   if(leftchild == NULL){	// if left missing, look only at the right hand child
 	tr = RightPlaneCollide(r);
 	if(r.u[axis] < 0){		  // ray traveling to left
