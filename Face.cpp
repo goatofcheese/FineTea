@@ -142,10 +142,10 @@ Collision Face::TriCollide(const Collision &c, FaceVert triverts[3], PolySurf *p
 	return ctri;
   }
 
- /* if(triverts[0].n != -1)
+  if(triverts[0].n != -1)
 	ctri.n = (u * p->Normals()[triverts[0].n] + v * p->Normals()[triverts[1].n] + 
 			  w * p->Normals()[triverts[2].n]).normalize();
-*/
+
   if(triverts[0].u != -1)
 	ctri.uv = u * p->UVs()[triverts[0].u] + v * p->UVs()[triverts[1].u] + 
 			w * p->UVs()[triverts[2].u];

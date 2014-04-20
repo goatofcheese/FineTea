@@ -102,7 +102,7 @@ static double DRAWWIDTH = 20;
 static double DRAWHEIGHT = 15;
 static double NEAR = 1;
 static double FAR = 100;
-static double DEPTH = -10;
+static double DEPTH = -20;
 static double WORLDWIDTH;
 
 // Viewing parameters
@@ -337,14 +337,11 @@ void doDisplay(){
 					 mv[1], mv[5], mv[9], mv[13],
 					 mv[2], mv[6], mv[10], mv[14],
 					 mv[3], mv[7], mv[11], mv[15]);
-	Vector4d cam(0., 0., -1., 1.);
-	cam = m4 * cam;
+
 	Matrix4x4 m42(pj[0], pj[4], pj[8], pj[12],
 					 pj[1], pj[5], pj[9], pj[13],
 					 pj[2], pj[6], pj[10], pj[14],
 					 pj[3], pj[7], pj[11], pj[15]);
-	Vector4d cam2(0., 0., 0., 1.);
-	cam2 = m42 * cam2;
 
 	// draw the model in wireframe or solid
 	drawModel(Wireframe);
@@ -511,7 +508,7 @@ void initialize(){
 	//DEPTH = propor / -4.;
 
 	//Make camera
-	cam = new Camera(Vector3d(0.,0.,10.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+	cam = new Camera(Vector3d(0.,0., (-1 * DEPTH)), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
