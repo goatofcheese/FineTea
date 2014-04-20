@@ -126,6 +126,7 @@ void Material::setMap(int mtype, Pixmap *p){
 void Material::createTexture(){
   if(illum_model < 1 || dmap == NULL || textureid != -1)
     return;
+std::cerr << "ME MAKE GOOD TEXYTURE " << name << std::endl;
   glGenTextures(1, &textureid); // OpenGL ID for this texture
   glBindTexture(GL_TEXTURE_2D, textureid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  

@@ -37,6 +37,7 @@
 #include "ImageFile.h"
 #include "PolySurf.h"
 #include "OBJFile.h"
+#include <map>
 #include <malloc.h>
 
 using namespace std;
@@ -128,6 +129,7 @@ static int ColorMode;
 // Texture map to be used by program
 static GLuint TextureID;	    // texture ID from OpenGL
 static unsigned char *TextureImage;   // pixmap for texture image
+std::map<std::string,GLuint> texIDMap;
 
 //command line attributes
 ImageFile *image = NULL;
@@ -205,40 +207,23 @@ void drawModel(int wireframe){
 		//ith face
 		Face curFace = psurf->Faces()[i];
 		// set up material color
-		Material curMat;
+		Material *curMat;
 		if(curFace.material != -1)
-			curMat = psurf->Materials()[curFace.material];
+			curMat = &psurf->Materials()[curFace.material];
 		else{
 			Color w(1.,1.,1.,1.);
-			curMat = Material(w, w, w, 100);
+			curMat = new Material(w, w, w, 100);
 		}
 		for(int k = 0; k < 3; k++){
-			ambient_color[k] = AMBIENT_FRACTION * curMat.a[k];
-			diffuse_color[k] = DIFFUSE_FRACTION * curMat.d[k];
-			specular_color[k] = SPECULAR_FRACTION * curMat.s[k];
-			shininess = (int)curMat.exp;
+			ambient_color[k] = AMBIENT_FRACTION * curMat->a[k];
+			diffuse_color[k] = DIFFUSE_FRACTION * curMat->d[k];
+			specular_color[k] = SPECULAR_FRACTION * curMat->s[k];
+			shininess = (int)curMat->exp;
 		}
 		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
-	   glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
+	        glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-		std::cout<< "BUBUBUBUBUBU"<< std::endl;
-
-		if(curMat.dmap){
-			glGenTextures(1, &TextureID);		  // get OpenGL ID for this texture
-			std::cerr<< "TextureID in init: " << TextureID<< std::endl;			
-			// make this texture the active texture
-			glBindTexture(GL_TEXTURE_2D, TextureID);	
-
-			// set texture drawing parameters
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	
-			// build mipmap in texture memory
-			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, curMat.dmap->NCols(), curMat.dmap->NRows(), GL_RGBA, GL_UNSIGNED_BYTE, curMat.dmap->Pixels());	
-
-			std::cout<< "BUBUBUBUBUBU"<< std::endl;
-		}
 
 		if(wireframe){	
 			glDisable(GL_TEXTURE_2D);    
@@ -249,9 +234,10 @@ void drawModel(int wireframe){
 		else{
 			// set up material color to be white
 			if(TextureMode != NOTEXTURE){
+				curMat->createTexture();
 				glEnable(GL_TEXTURE_2D);
 				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, ColorMode);
-				glBindTexture(GL_TEXTURE_2D, TextureID);	    // set the active texture
+				glBindTexture(GL_TEXTURE_2D, curMat->textureid);	    // set the active texture
 				switch(TextureMode){
 					case NEARTEXTURE:
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -268,7 +254,6 @@ void drawModel(int wireframe){
 				}
 			}
 		}
-
  
 	 	//if no vertex normals defined, use face normal
 		if(!hasVectorNormals)
@@ -286,7 +271,6 @@ void drawModel(int wireframe){
 				bool hasTextureCoords = (psurf->Faces()[i].faceverts[j].u != -1);
 				if(hasTextureCoords){
 					Vector2d vertUV = psurf->UVs()[curFace.faceverts[j].u];
-					std::cout<< vertUV<< std::endl;
 					glTexCoord2f(vertUV[0], vertUV[1]);
 				}
 				//draw the vertex
@@ -346,16 +330,12 @@ void doDisplay(){
 					 mv[3], mv[7], mv[11], mv[15]);
 	Vector4d cam(0., 0., -1., 1.);
 	cam = m4 * cam;
-//	std::cout<< cam << std::endl;
-//	for(int q=0; q<16;++q) std::cout << mv[q] << std::endl;
-	std::cout << std::endl;
 	Matrix4x4 m42(pj[0], pj[4], pj[8], pj[12],
 					 pj[1], pj[5], pj[9], pj[13],
 					 pj[2], pj[6], pj[10], pj[14],
 					 pj[3], pj[7], pj[11], pj[15]);
 	Vector4d cam2(0., 0., 0., 1.);
 	cam2 = m42 * cam2;
-//	std::cout<< cam2 << std::endl;
 
 	// draw the model in wireframe or solid
 	drawModel(Wireframe);
