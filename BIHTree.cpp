@@ -20,7 +20,6 @@ inline float BIHNode::RightPlaneCollide(const Ray &r) const{
 
 Collision BIHNode::LeafCollide(const Ray &r, Faceptr faces[], PolySurf *psurf) const{
   Collision cnear, c;
-
   for(int i = leafstart; i <= leafend; i++){
 	c = faces[i]->RayCollide(r, psurf);
 	if(c.t < cnear.t){
@@ -76,7 +75,7 @@ Collision BIHNode::RayCollide(const Ray &r, float tmin, float tmax, Faceptr face
   tl = LeftPlaneCollide(r);
   tr = RightPlaneCollide(r);
   
-  if(r.u[axis] > 0){  // ray is traveling to the right along the dividing axis
+  if(r.u[axis] >= 0){  // ray is traveling to the right along the dividing axis
 	// if the ray lies completely within the region between the dividing planes
 	// then no collision, prune the rest of the tree
 	if(tl < tmin + SMALLNUMBER && tr > tmax - SMALLNUMBER)

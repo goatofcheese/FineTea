@@ -16,7 +16,7 @@ endif
 HFILES = File.${H} OBJFile.${H} MTLFile.${H} ImageFile.${H} Ray.${H} Collision.${H} AABBox.${H} Object.${H} PolySurf.${H} BIHTree.${H} Face.${H} Line.${H} Group.${H} Color.${H} Pixmap.${H} Vector.${H} Utility.${H} MakeSpace.${H} Camera.${H} ViewScreen.${H} Light.${H} PointLight.${H} Material.${H} ParallelLight.${H} Matrix.${H}
 OFILES = File.o OBJFile.o MTLFile.o ImageFile.o Ray.o AABBox.o Object.o PolySurf.o BIHTree.o Face.o Line.o Group.o Pixmap.o Color.o Vector.o Utility.o Camera.o ViewScreen.o Light.o PointLight.o Material.o ParallelLight.o Matrix.o
 
-PROJECT = objtrace
+PROJECT = mipmaps
 
 ${PROJECT}:	${PROJECT}.o ${OFILES}
 	${CC} ${LFLAGS} -o ${PROJECT} ${PROJECT}.o ${OFILES} ${LDFLAGS}

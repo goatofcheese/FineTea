@@ -18,7 +18,7 @@
 #include <cstdlib>
 
 /* range of real numbers */
-#define SMALLNUMBER	1.0e-5
+#define SMALLNUMBER	1.0e-3
 #define HUGENUMBER	1.0e10
 
 /* Miscellaneous Scalar Math */

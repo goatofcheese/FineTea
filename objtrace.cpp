@@ -37,7 +37,6 @@ int Nrays = 1;
 OBJFile objfile;
 Color black;
 int MAX_RECURSION_LEVEL = 8;
-double SMALL_NUMBER = 0.00000001;
 
 void drawScreen(){
 	
@@ -176,7 +175,7 @@ Color recShade(Ray r, Collision col, int level, vector<Object*> scene, vector<Li
 		visCheck = shoot(sray, scene);
 
 		double euclidDist = (light->getPos() - col.x).norm();
-		if(visCheck.t > abs(euclidDist) || visCheck.t < SMALL_NUMBER){
+		if(visCheck.t > abs(euclidDist) || visCheck.t < SMALLNUMBER){
 			color = color + directShade(r, col, light->getColor(), ul,  scene);
 		}
 
@@ -268,9 +267,6 @@ int main(int argc, char* argv[]){
 	else if(view == 'v')
 		orthographic = false;
 
-std::cerr << d1 << std::endl;
-std::cerr << d2 << std::endl;
-std::cerr << d3 << std::endl;
 
 	//Adjust pixel height accordinglly
 	Height = Width/d2;
@@ -347,16 +343,10 @@ std::cerr << d3 << std::endl;
 				Vector3d p = center + ((px + rx) * ux) + ((py + ry) * uy);
 				//if orthographic, shoot ray perpendicular to screen
 				if(orthographic){
-//					std::cout << pin << std::endl;
 					ur = cam->getDir().normalize();
-//					std::cerr << ur << std::endl;
-//					std::cerr << std::endl;
 					pin = p;
-					//pin = Vector3d(0,0,0);
-					//pin = center;
 				}
 				else{
-//					std::cout << pin << std::endl;
 					ur = (p - pin).normalize();
 				}
 				Ray r(pin, ur);
