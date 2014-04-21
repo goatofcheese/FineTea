@@ -214,7 +214,7 @@ void drawModel(int wireframe){
 
 	//Draw the PolySurf
 	int i, j;
-	bool hasVectorNormals = (psurf->Faces()[0].faceverts[0].n != -1);
+	bool hasVertexNormals = (psurf->Faces()[0].faceverts[0].n != -1);
 	int op = (wireframe? GL_LINE_LOOP: GL_POLYGON);
 	for(i = 0; i < psurf->NFaces(); i++){
 		//ith face
@@ -269,14 +269,14 @@ void drawModel(int wireframe){
 		}
  
 	 	//if no vertex normals defined, use face normal
-		if(!hasVectorNormals)
+		if(!hasVertexNormals)
 			glNormal3f(curFace.normal[0], curFace.normal[1], curFace.normal[2]);
 		//Draw the face
 		glBegin(op);
 			//loop through vertices
 			for(j = 0; j < curFace.nverts; j++){
 				//if vector normals defined, tell opengl
-				if(hasVectorNormals){
+				if(hasVertexNormals){
 					Vector3d vertNorm = psurf->Normals()[curFace.faceverts[j].n];
 					glNormal3f(vertNorm[0], vertNorm[1], vertNorm[2]);
 				}

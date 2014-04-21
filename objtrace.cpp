@@ -471,7 +471,6 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		Vector3d *vert = &(p->Vertices()[f]);
 		Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
 		modvert = (matTrans * modvert);
-		std::cout<< "vert "<< f<< ": "<< modvert<< std::endl;
 		Vector3d v = Vector3d(modvert[0], modvert[1], modvert[2]);
 		rayPoly.addVertex(v);
 	}
@@ -559,7 +558,6 @@ p->BuildBIHTree();
 	
 	//Camera *cam = new Camera(*viewpoint, *face, *up, d1);
 	Camera *cam = c;
-	std::cout<< *cam << std::endl;
 
 	Vector4d burble(matTrans * c->getDir());
 	Vector3d gurbleburble(burble[0],burble[1],burble[2]);
@@ -610,7 +608,7 @@ p->BuildBIHTree();
 
 	//Arrange Lights
 	//cube Vector3d lightpos(3, 0, 0);
-	Vector3d lightpos(1, 1, 30);
+	Vector3d lightpos(1, 1, 1);
 	Color lightcol(0.8, 0.8, 0.8, 1.);
 /*	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);
