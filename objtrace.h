@@ -18,4 +18,11 @@
 #include <string.h>
 #include <math.h>
 
-void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, bool, Matrix4x4);
+#ifdef __APPLE__
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
+
+
+void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, bool, GLfloat *);

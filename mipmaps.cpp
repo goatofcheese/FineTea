@@ -145,6 +145,7 @@ char **args;
 
 //ModelView matrix in Matrix4x4 form to change the rays of the raytracer
 static Matrix4x4 m4;
+GLfloat mv[16];
 
 //
 // Routine to initialize the state of the program to start-up defaults
@@ -330,7 +331,6 @@ void doDisplay(){
 	glRotatef(ThetaY, 0, 1, 0);       // rotate model about x axis
 	glRotatef(ThetaX, 1, 0, 0);       // rotate model about y axis
 	
-	GLfloat mv[16];
 	GLfloat pj[16];
 	glGetFloatv (GL_MODELVIEW_MATRIX, mv);
 	glGetFloatv (GL_PROJECTION_MATRIX, pj);
@@ -392,7 +392,7 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, !Projection, m4);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, !Projection, mv);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
@@ -510,7 +510,7 @@ void initialize(){
 	//DEPTH = propor / -4.;
 
 	//Make camera
-	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+	cam = new Camera(Vector3d(0., 0., 0), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,

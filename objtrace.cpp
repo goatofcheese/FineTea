@@ -308,8 +308,136 @@ vector<Object*> buildScene(PolySurf *p){
 	return scene;
 }
 
+bool gluInvertMatrix(const float m[16], float invOut[16]){
+    float inv[16], det;
+    int i;
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, Matrix4x4 transform){
+    inv[0] = m[5]  * m[10] * m[15] - 
+             m[5]  * m[11] * m[14] - 
+             m[9]  * m[6]  * m[15] + 
+             m[9]  * m[7]  * m[14] +
+             m[13] * m[6]  * m[11] - 
+             m[13] * m[7]  * m[10];
+
+    inv[4] = -m[4]  * m[10] * m[15] + 
+              m[4]  * m[11] * m[14] + 
+              m[8]  * m[6]  * m[15] - 
+              m[8]  * m[7]  * m[14] - 
+              m[12] * m[6]  * m[11] + 
+              m[12] * m[7]  * m[10];
+
+    inv[8] = m[4]  * m[9] * m[15] - 
+             m[4]  * m[11] * m[13] - 
+             m[8]  * m[5] * m[15] + 
+             m[8]  * m[7] * m[13] + 
+             m[12] * m[5] * m[11] - 
+             m[12] * m[7] * m[9];
+
+    inv[12] = -m[4]  * m[9] * m[14] + 
+               m[4]  * m[10] * m[13] +
+               m[8]  * m[5] * m[14] - 
+               m[8]  * m[6] * m[13] - 
+               m[12] * m[5] * m[10] + 
+               m[12] * m[6] * m[9];
+
+    inv[1] = -m[1]  * m[10] * m[15] + 
+              m[1]  * m[11] * m[14] + 
+              m[9]  * m[2] * m[15] - 
+              m[9]  * m[3] * m[14] - 
+              m[13] * m[2] * m[11] + 
+              m[13] * m[3] * m[10];
+
+    inv[5] = m[0]  * m[10] * m[15] - 
+             m[0]  * m[11] * m[14] - 
+             m[8]  * m[2] * m[15] + 
+             m[8]  * m[3] * m[14] + 
+             m[12] * m[2] * m[11] - 
+             m[12] * m[3] * m[10];
+
+    inv[9] = -m[0]  * m[9] * m[15] + 
+              m[0]  * m[11] * m[13] + 
+              m[8]  * m[1] * m[15] - 
+              m[8]  * m[3] * m[13] - 
+              m[12] * m[1] * m[11] + 
+              m[12] * m[3] * m[9];
+
+    inv[13] = m[0]  * m[9] * m[14] - 
+              m[0]  * m[10] * m[13] - 
+              m[8]  * m[1] * m[14] + 
+              m[8]  * m[2] * m[13] + 
+              m[12] * m[1] * m[10] - 
+              m[12] * m[2] * m[9];
+
+    inv[2] = m[1]  * m[6] * m[15] - 
+             m[1]  * m[7] * m[14] - 
+             m[5]  * m[2] * m[15] + 
+             m[5]  * m[3] * m[14] + 
+             m[13] * m[2] * m[7] - 
+             m[13] * m[3] * m[6];
+
+    inv[6] = -m[0]  * m[6] * m[15] + 
+              m[0]  * m[7] * m[14] + 
+              m[4]  * m[2] * m[15] - 
+              m[4]  * m[3] * m[14] - 
+              m[12] * m[2] * m[7] + 
+              m[12] * m[3] * m[6];
+
+    inv[10] = m[0]  * m[5] * m[15] - 
+              m[0]  * m[7] * m[13] - 
+              m[4]  * m[1] * m[15] + 
+              m[4]  * m[3] * m[13] + 
+              m[12] * m[1] * m[7] - 
+              m[12] * m[3] * m[5];
+
+    inv[14] = -m[0]  * m[5] * m[14] + 
+               m[0]  * m[6] * m[13] + 
+               m[4]  * m[1] * m[14] - 
+               m[4]  * m[2] * m[13] - 
+               m[12] * m[1] * m[6] + 
+               m[12] * m[2] * m[5];
+
+    inv[3] = -m[1] * m[6] * m[11] + 
+              m[1] * m[7] * m[10] + 
+              m[5] * m[2] * m[11] - 
+              m[5] * m[3] * m[10] - 
+              m[9] * m[2] * m[7] + 
+              m[9] * m[3] * m[6];
+
+    inv[7] = m[0] * m[6] * m[11] - 
+             m[0] * m[7] * m[10] - 
+             m[4] * m[2] * m[11] + 
+             m[4] * m[3] * m[10] + 
+             m[8] * m[2] * m[7] - 
+             m[8] * m[3] * m[6];
+
+    inv[11] = -m[0] * m[5] * m[11] + 
+               m[0] * m[7] * m[9] + 
+               m[4] * m[1] * m[11] - 
+               m[4] * m[3] * m[9] - 
+               m[8] * m[1] * m[7] + 
+               m[8] * m[3] * m[5];
+
+    inv[15] = m[0] * m[5] * m[10] - 
+              m[0] * m[6] * m[9] - 
+              m[4] * m[1] * m[10] + 
+              m[4] * m[2] * m[9] + 
+              m[8] * m[1] * m[6] - 
+              m[8] * m[2] * m[5];
+
+    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+
+    if (det == 0)
+        return false;
+
+    det = 1.0 / det;
+
+    for (i = 0; i < 16; i++)
+        invOut[i] = inv[i] * det;
+
+    return true;
+}
+
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, float *transform){
 
 	sn = svn;
 	wfe = wFileExists;
@@ -317,14 +445,41 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	img = imageFile;
 
 	std::cout<< transform<< std::endl;
+	Matrix4x4 matTrans;
+	matTrans = Matrix4x4(transform[0], transform[4], transform[8], transform[12],
+					 transform[1], transform[5], transform[9], transform[13],
+					 transform[2], transform[6], transform[10], transform[14],
+					 transform[3], transform[7], transform[11], transform[15]);
+
 	for(int f = 0; f < p->NVertices(); f++){
-			Vector3d *vert = &(p->Vertices()[f]);
-			Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
-			modvert = (transform * modvert);
-			(*vert)[0] = modvert[0];
-			(*vert)[1] = modvert[1];
-			(*vert)[2] = modvert[2];
+		Vector3d *vert = &(p->Vertices()[f]);
+		Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
+		modvert = (matTrans * modvert);
+		(*vert)[0] = modvert[0];
+		(*vert)[1] = modvert[1];
+		(*vert)[2] = modvert[2];
 	}
+
+	float invT[16];
+	gluInvertMatrix(transform, invT);
+
+	Matrix4x4 transT;
+	transT = Matrix4x4(invT[0], invT[1], invT[2], invT[3],
+				 invT[4], invT[5], invT[6], invT[7],
+				 invT[8], invT[9], invT[10], invT[11],
+				 invT[12], invT[13], invT[14], invT[15]);
+
+	for(int n = 0; n < p->NNormals(); n++){
+		Vector3d *norm = &(p->Normals()[n]);
+		Vector4d modnorm = Vector4d((*norm)[0],(*norm)[1],(*norm)[2],1.);
+		modnorm = (transT * modnorm);
+		(*norm)[0] = modnorm[0];
+		(*norm)[1] = modnorm[1];
+		(*norm)[2] = modnorm[2];
+	}
+	
+
+
 
 	/* read in camera attributes */
 	double d1, d2, d3;
