@@ -84,31 +84,136 @@ Collision shoot(Ray r, vector<Object*> scene){
 	return closest;	
 } 
 
-Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Object*> scene){
+Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 
 	double id, is, kd = 1.0, ks = 1.0;
 	Vector3d h;
-	Color cd, cs, ret, ambient, diffuse, specular;
+	Color cd, cs, ambient, diffuse, specular, mapcolor;
+	Color	ret = Color(0.,0.,0.,1.);
 
 	Material mat = *(col.m);
 	ambient = mat.a;
 	diffuse = mat.d;
 	specular = mat.s;
-	int ui, vi;
+	int ui, vi, row, column, illum_model;
+	float alpha;
+
+	illum_model = mat.illum_model;
 
 	if(mat.amap){
 		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
 		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
-		ambient[0] = (double)mat.amap[0][vi][ui][0] / 255;
-		ambient[1] = (double)mat.amap[0][vi][ui][1] / 255;
-		ambient[2] = (double)mat.amap[0][vi][ui][2] / 255;
+		alpha = ((float)mat.amap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.amap[0][vi][ui][0] / 255.,
+								(double)mat.amap[0][vi][ui][1] / 255.,	
+								(double)mat.amap[0][vi][ui][2] / 255.,
+								1.0 );
+		ambient = ((1 - alpha) * ambient + (alpha * mapcolor));
+	}
+	if(mat.dmap){
+		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NRows();
+		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
+		alpha = ((float)mat.dmap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.dmap[0][vi][ui][0] / 255.,
+								(double)mat.dmap[0][vi][ui][1] / 255.,	
+								(double)mat.dmap[0][vi][ui][2] / 255.,
+								1.0 );
+		diffuse = ((1 - alpha) * diffuse + (alpha * mapcolor));
+	}
+	if(mat.smap){
+		ui = (int)(mat.smap[0].NCols() * col.uv[0]) % mat.smap[0].NRows();
+		vi = (int)(mat.smap[0].NRows() * col.uv[1]) % mat.smap[0].NRows();
+		alpha = ((float)mat.smap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.smap[0][vi][ui][0] / 255.,
+								(double)mat.smap[0][vi][ui][1] / 255.,	
+								(double)mat.smap[0][vi][ui][2] / 255.,
+								1.0 );
+		specular = ((1 - alpha) * diffuse + (alpha * mapcolor));
+	}
+
+	for(long l = 0; l < lights.size(); l++){
+		Light *light = lights.at(l);
+		if(light == NULL)
+			continue;
+		Color lcolor;
+		Vector3d ul;
+		lcolor = light->getColor();
+		ul = light->getDirection(col.x);
+
+
+
+		h = ((col.x- ray.p).normalize() + ul).normalize();
+		id = max(-1 * (ul * col.n), 0.);
+		is = (h * col.n);
+		is = pow(is, mat.exp);
+	
+		cd = id * (diffuse * lcolor);
+		cs = is * (specular * lcolor);
+		
+		cd = cd * kd;
+		cs = cs * ks;		
+
+		if(illum_model == 0)
+			ret = ret + cd;
+		else if(illum_model == 1)
+			ret = ret + cd + (ambient * 0.2);
+		else if(illum_model == 2)
+			ret = ret + cd + cs + (ambient * 0.2);	
+
+		for(int i = 0; i < 3; i++){
+			if(ret[i] >= 1.0)
+				ret[i] = 1.0;
+			if(ret[i] < 0.0)
+				ret[i] = 0.0;
+		}
+	}
+	return ret;
+}
+
+Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Object*> scene){
+
+	double id, is, kd = 1.0, ks = 1.0;
+	Vector3d h;
+	Color cd, cs, ret, ambient, diffuse, specular, mapcolor;
+
+	Material mat = *(col.m);
+	ambient = mat.a;
+	diffuse = mat.d;
+	specular = mat.s;
+	int ui, vi, row, column, illum_model;
+	float alpha;
+
+	illum_model = mat.illum_model;
+
+	if(mat.amap){
+		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
+		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
+		alpha = ((float)mat.amap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.amap[0][vi][ui][0] / 255.,
+								(double)mat.amap[0][vi][ui][1] / 255.,	
+								(double)mat.amap[0][vi][ui][2] / 255.,
+								1.0 );
+		ambient = ((1 - alpha) * ambient + (alpha * mapcolor));
 	}
 	if(mat.dmap){
 		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NCols();
 		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
-		diffuse[0] = (double)mat.dmap[0][vi][ui][0] / 255;
-		diffuse[1] = (double)mat.dmap[0][vi][ui][1] / 255;
-		diffuse[2] = (double)mat.dmap[0][vi][ui][2] / 255;
+		alpha = ((float)mat.dmap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.dmap[0][vi][ui][0] / 255.,
+								(double)mat.dmap[0][vi][ui][1] / 255.,	
+								(double)mat.dmap[0][vi][ui][2] / 255.,
+								1.0 );
+		diffuse = ((1 - alpha) * diffuse + (alpha * mapcolor));
+	}
+	if(mat.smap){
+		ui = (int)(mat.smap[0].NCols() * col.uv[0]) % mat.smap[0].NRows();
+		vi = (int)(mat.smap[0].NRows() * col.uv[1]) % mat.smap[0].NRows();
+		alpha = ((float)mat.smap[0][vi][ui][3] / 255.0);
+		mapcolor = Color( (double)mat.smap[0][vi][ui][0] / 255.,
+								(double)mat.smap[0][vi][ui][1] / 255.,	
+								(double)mat.smap[0][vi][ui][2] / 255.,
+								1.0 );
+		specular = ((1 - alpha) * diffuse + (alpha * mapcolor));
 	}
 
 	h = ((col.x- ray.p).normalize() + ul).normalize();
@@ -122,7 +227,12 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 	cd = cd * kd;
 	cs = cs * ks;		
 
-	ret = cd + cs + (ambient * 0.2);
+	if(illum_model == 0)
+		ret = cd;
+	else if(illum_model == 1)
+		ret = cd + (ambient * 0.2);
+	else if(illum_model == 2)
+		ret = cd + cs + (ambient * 0.2);
 
 	for(int i = 0; i < 3; i++){
 		if(ret[i] >= 1.0)
@@ -199,12 +309,23 @@ vector<Object*> buildScene(PolySurf *p){
 }
 
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, Matrix4x4 transform){
 
 	sn = svn;
 	wfe = wFileExists;
 
 	img = imageFile;
+
+	std::cout<< transform<< std::endl;
+	for(int f = 0; f < p->NVertices(); f++){
+			Vector3d *vert = &(p->Vertices()[f]);
+			Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
+			modvert = (transform * modvert);
+			(*vert)[0] = modvert[0];
+			(*vert)[1] = modvert[1];
+			(*vert)[2] = modvert[2];
+	}
+
 	/* read in camera attributes */
 	double d1, d2, d3;
 	char view;
@@ -277,14 +398,17 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 
 	//Arrange Lights
 	//cube Vector3d lightpos(3, 0, 0);
-	Vector3d lightpos(20, 0, 0);
-	Color lightcol(0.8, 0.8, 0.2, 1.);
-	std::vector<Light*> lights(5);
+	Vector3d lightpos(1, 1, 30);
+	Color lightcol(0.8, 0.8, 0.8, 1.);
+/*	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);
 	lights.at(1) = new PointLight(lightcol, Vector3d(-20.0, 0.9, -5));
 	lights.at(2) = new PointLight(Color(0.4, 0.4, 0.2, 1), Vector3d(0, 20, 0));
 	lights.at(3) = new PointLight(lightcol, Vector3d(-20, -20, 20));
 	lights.at(4) = new PointLight(lightcol, Vector3d(20, -22, 18));
+*/
+	std::vector<Light*> lights(1);
+	lights.at(0) = new PointLight(lightcol, lightpos);
 
 	//shoot a ray through each pixel	
 	center = (pin + (cam->getDir() * cam->getFocalDistance()));
@@ -318,7 +442,8 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
-					shades[n] = recShade(r, closest, 0, scene, lights);
+					//shades[n] = recShade(r, closest, 0, scene, lights);
+					shades[n] = nonRecShade(r, closest, lights);
 				}
 				else{
 					shades[n][0] = 0;

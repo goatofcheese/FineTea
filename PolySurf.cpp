@@ -181,6 +181,7 @@ void PolySurf::addFaceMaterial(int f, int m){
 }
 
 void PolySurf::BuildBIHTree(){
+  std::cout<< "BUILDTLKJALSDFJKLSKDJLAJDA\n";
   bihtree = new BIHTree(this);
 }
 
