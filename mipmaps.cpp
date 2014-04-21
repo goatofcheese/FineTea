@@ -144,7 +144,7 @@ Camera *cam;
 char **args;
 
 //ModelView matrix in Matrix4x4 form to change the rays of the raytracer
-static Matrix4x4 m4;
+static Matrix4x4 idklel;
 GLfloat mv[16];
 
 //
@@ -335,23 +335,31 @@ void doDisplay(){
 	glGetFloatv (GL_MODELVIEW_MATRIX, mv);
 	glGetFloatv (GL_PROJECTION_MATRIX, pj);
 
+	
 	//opengl is column major, matrix library row major
-	m4 = Matrix4x4(mv[0], mv[4], mv[8], mv[12],
-					 mv[1], mv[5], mv[9], mv[13],
-					 mv[2], mv[6], mv[10], mv[14],
-					 mv[3], mv[7], mv[11], mv[15]);
+	Matrix4x4 m4 = Matrix4x4(mv[0], mv[4], mv[8], mv[12],								 mv[1], mv[5], mv[9], mv[13],
+				 mv[2], mv[6], mv[10], mv[14],
+				 mv[3], mv[7], mv[11], mv[15]);
 
-	Vector4d test = Vector4d(0.,0.,-1.,1.);
 
+	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],								 pj[1], pj[5], pj[9], pj[13],
+				 pj[2], pj[6], pj[10], pj[14],
+				 pj[3], pj[7], pj[11], pj[15]);
+
+Vector4d test = Vector4d(0.,0.,-1.,1.);
+//std::cerr << "idklel" << idklel << std::endl;
 	test = m4 * test;
-
+//	std::cerr << "thing james wanted pt1\t" << test << std::endl;
+	test = idklel * test;
+//	std::cerr << "thing james wanted pt2\t" << test << std::endl;
+//	std::cerr << std::endl;
 	// draw the model in wireframe or solid
 	drawModel(Wireframe);
     
 	glutSwapBuffers();
 }
 
-//
+
 // Keyboard callback routine. 
 // Set various modes or take actions based on key presses
 //
@@ -510,7 +518,7 @@ void initialize(){
 	//DEPTH = propor / -4.;
 
 	//Make camera
-	cam = new Camera(Vector3d(0., 0., 0), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+	cam = new Camera(Vector3d(0., 0., 30), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,

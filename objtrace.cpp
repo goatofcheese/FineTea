@@ -437,6 +437,22 @@ bool gluInvertMatrix(const float m[16], float invOut[16]){
     return true;
 }
 
+Vector3d ExtractCameraPos_NoScale(const Matrix4x4 &a_modelView)
+{
+/*  Matrix3x3 rotMat(a_modelView[0],a_modelView[1],a_modelView[2],
+			a_modelView[4], a_modelView[5], a_modelView[6],
+			a_modelView[8], a_modelView[9], a_modelView[10]);
+*/
+  Matrix3x3 rotMat(a_modelView[0][0], a_modelView[0][1], a_modelView[0][2],
+		a_modelView[1][0], a_modelView[1][1], a_modelView[1][2],
+		a_modelView[2][0], a_modelView[2][1], a_modelView[2][2]);
+
+  Vector3d d(a_modelView[0][3], a_modelView[1][3], a_modelView[2][3]);
+ 
+  Vector3d retVec = -d * rotMat;
+  return retVec;
+}
+
 void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, float *transform){
 
 	sn = svn;
@@ -444,13 +460,12 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 
 	img = imageFile;
 
-	std::cout<< transform<< std::endl;
 	Matrix4x4 matTrans;
 	matTrans = Matrix4x4(transform[0], transform[4], transform[8], transform[12],
 					 transform[1], transform[5], transform[9], transform[13],
 					 transform[2], transform[6], transform[10], transform[14],
 					 transform[3], transform[7], transform[11], transform[15]);
-
+/*
 	for(int f = 0; f < p->NVertices(); f++){
 		Vector3d *vert = &(p->Vertices()[f]);
 		Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
@@ -459,27 +474,32 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		(*vert)[1] = modvert[1];
 		(*vert)[2] = modvert[2];
 	}
-
+*/
 	float invT[16];
 	gluInvertMatrix(transform, invT);
 
-	Matrix4x4 transT;
-	transT = Matrix4x4(invT[0], invT[1], invT[2], invT[3],
+	Matrix4x4 invTransT;
+	invTransT = Matrix4x4(invT[0], invT[1], invT[2], invT[3],
 				 invT[4], invT[5], invT[6], invT[7],
 				 invT[8], invT[9], invT[10], invT[11],
 				 invT[12], invT[13], invT[14], invT[15]);
-
+/*
 	for(int n = 0; n < p->NNormals(); n++){
 		Vector3d *norm = &(p->Normals()[n]);
 		Vector4d modnorm = Vector4d((*norm)[0],(*norm)[1],(*norm)[2],1.);
-		modnorm = (transT * modnorm);
+		modnorm = (invTransT * modnorm);
 		(*norm)[0] = modnorm[0];
 		(*norm)[1] = modnorm[1];
 		(*norm)[2] = modnorm[2];
 	}
-	
+*/
+std::cerr << "matTrans:\n" << matTrans << std::endl;
+std::cerr << "invTransT:\n" << invTransT << std::endl;
+std::cerr << "camera trans dir: " << (matTrans * c->getDir()) << std::endl;
+std::cerr << "fuckityfuckfuck: " << ExtractCameraPos_NoScale(matTrans) << std::endl;
+std::cerr << std::endl;
 
-
+p->BuildBIHTree();	
 
 	/* read in camera attributes */
 	double d1, d2, d3;
@@ -511,6 +531,15 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	Camera *cam = new Camera(*viewpoint, *face, *up, d1);
 	std::cout<< *cam << std::endl;
 	cam = c;
+
+	Vector4d burble(matTrans * c->getDir());
+std::cerr << "herro?" << std::endl;
+	Vector3d gurbleburble(burble[0],burble[1],burble[2]);
+	cam = new Camera(ExtractCameraPos_NoScale(matTrans),gurbleburble,Vector3d(0,1,0),0.5);
+
+	cam = new Camera(Vector3d(-9.45, 0.246,17.6),Vector3d(-0.473,0.014,-0.881),Vector3d(0,1,0),0.5);
+
+
 	std::cout<< *cam << std::endl;
 	//ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
 	pixmap = new Pixmap(Height, Width);
