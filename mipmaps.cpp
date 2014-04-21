@@ -143,6 +143,9 @@ PolySurf *psurf;
 Camera *cam;
 char **args;
 
+//ModelView matrix in Matrix4x4 form to change the rays of the raytracer
+static Matrix4x4 m4;
+
 //
 // Routine to initialize the state of the program to start-up defaults
 //
@@ -333,15 +336,14 @@ void doDisplay(){
 	glGetFloatv (GL_PROJECTION_MATRIX, pj);
 
 	//opengl is column major, matrix library row major
-	Matrix4x4 m4(mv[0], mv[4], mv[8], mv[12],
+	m4 = Matrix4x4(mv[0], mv[4], mv[8], mv[12],
 					 mv[1], mv[5], mv[9], mv[13],
 					 mv[2], mv[6], mv[10], mv[14],
 					 mv[3], mv[7], mv[11], mv[15]);
 
-	Matrix4x4 m42(pj[0], pj[4], pj[8], pj[12],
-					 pj[1], pj[5], pj[9], pj[13],
-					 pj[2], pj[6], pj[10], pj[14],
-					 pj[3], pj[7], pj[11], pj[15]);
+	Vector4d test = Vector4d(0.,0.,-1.,1.);
+
+	test = m4 * test;
 
 	// draw the model in wireframe or solid
 	drawModel(Wireframe);
@@ -390,7 +392,7 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, !Projection);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, !Projection, m4);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
@@ -508,7 +510,7 @@ void initialize(){
 	//DEPTH = propor / -4.;
 
 	//Make camera
-	cam = new Camera(Vector3d(0.,0., (-1 * DEPTH)), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
+	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,

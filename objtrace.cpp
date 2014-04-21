@@ -309,12 +309,23 @@ vector<Object*> buildScene(PolySurf *p){
 }
 
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, Matrix4x4 transform){
 
 	sn = svn;
 	wfe = wFileExists;
 
 	img = imageFile;
+
+	std::cout<< transform<< std::endl;
+	for(int f = 0; f < p->NVertices(); f++){
+			Vector3d *vert = &(p->Vertices()[f]);
+			Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
+			modvert = (transform * modvert);
+			(*vert)[0] = modvert[0];
+			(*vert)[1] = modvert[1];
+			(*vert)[2] = modvert[2];
+	}
+
 	/* read in camera attributes */
 	double d1, d2, d3;
 	char view;
