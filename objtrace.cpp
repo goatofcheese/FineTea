@@ -99,7 +99,6 @@ Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 	float alpha;
 
 	illum_model = mat.illum_model;
-
 	if(mat.amap){
 		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
 		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
@@ -149,7 +148,6 @@ Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 	
 		cd = id * (diffuse * lcolor);
 		cs = is * (specular * lcolor);
-		
 		cd = cd * kd;
 		cs = cs * ks;		
 
@@ -454,7 +452,7 @@ Vector3d ExtractCameraPos_NoScale(const Matrix4x4 &a_modelView)
   return retVec;
 }
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, bool ortho, float *transform){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform){
 
 	sn = svn;
 	wfe = wFileExists;
@@ -477,6 +475,10 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		Vector3d v = Vector3d(modvert[0], modvert[1], modvert[2]);
 		rayPoly.addVertex(v);
 	}
+	for(int f = 0; f < p->NGroups(); f++){
+		Group g = p->Groups()[f];
+		rayPoly.setGroup(g.name);
+	}
 	for(int f = 0; f < p->NFaces(); f++){
 		Face copy = p->Faces()[f];
 		rayPoly.newFace(-1, copy.material);
@@ -486,6 +488,10 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		}
 		rayPoly.setFaceNormal(f);
 	}
+	for(int f = 0; f < p->NNormals(); f++){
+		Vector3d normal = p->Normals()[f];
+		rayPoly.addNormal(normal);
+	}
 	for(int f = 0; f < p->NUVs(); f++){
 		Vector2d uv = p->UVs()[f];
 		rayPoly.addUV(uv);
@@ -493,6 +499,7 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	for(int f = 0; f < p->NMaterials(); f++){
 		Material m = p->Materials()[f];
 		rayPoly.newMaterial(m.name);
+		rayPoly.Materials()[f] = m;
 	}
 
 	//
@@ -523,7 +530,7 @@ std::cerr << std::endl;
 */
 p->BuildBIHTree();	
 
-	/* read in camera attributes */
+/*	// read in camera attributes 
 	double d1, d2, d3;
 	char view;
 	Vector3d *viewpoint, *face, *up;
@@ -542,16 +549,16 @@ p->BuildBIHTree();
 	up = new Vector3d(d1,d2,d3);
 	attributes >> d1 >> d2 >> d3;	
 	attributes >> view;
-
+*/
 
 	orthographic = ortho;
 
 
 	//Adjust pixel height accordinglly
-	Height = Width/d2;
+	Height = Width*(worldheight/worldwidth);
 	
-	Camera *cam = new Camera(*viewpoint, *face, *up, d1);
-	cam = c;
+	//Camera *cam = new Camera(*viewpoint, *face, *up, d1);
+	Camera *cam = c;
 	std::cout<< *cam << std::endl;
 
 	Vector4d burble(matTrans * c->getDir());
@@ -588,7 +595,7 @@ p->BuildBIHTree();
 
 	pin = cam->getPinhole();
 	ww = worldwidth;
-	wh = ww/d2;
+	wh = worldheight;
 	rows = Height;
 	cols = Width;
 	ph = wh / double(rows);
@@ -652,6 +659,7 @@ p->BuildBIHTree();
 					count++;
 					//shades[n] = recShade(r, closest, 0, scene, lights);
 					shades[n] = nonRecShade(r, closest, lights);
+
 				}
 				else{
 					shades[n][0] = 0;
