@@ -229,7 +229,7 @@ int OBJFile::processl(char *line){
 
 int OBJFile::processf(char *line){
 	int idx[3];	      // vertex index, texture index, normal index
-	int faceidx, quadfaceidx;
+	int faceidx;
 	int fcount = 0;
 
 	if(strlen(line) < 7 || !isspace(line[1])){	  // f n n n

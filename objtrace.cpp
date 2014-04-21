@@ -305,6 +305,7 @@ vector<Object*> buildScene(PolySurf *p){
 
 	std::vector<Object*> scene(1);
 	scene.at(0) = (Object*) p;
+	p->BuildBIHTree();
 	return scene;
 }
 
@@ -465,16 +466,37 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 					 transform[1], transform[5], transform[9], transform[13],
 					 transform[2], transform[6], transform[10], transform[14],
 					 transform[3], transform[7], transform[11], transform[15]);
-/*
+
+	//create mutated polysurf for raytracing
+	PolySurf rayPoly = PolySurf();
 	for(int f = 0; f < p->NVertices(); f++){
 		Vector3d *vert = &(p->Vertices()[f]);
 		Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
 		modvert = (matTrans * modvert);
-		(*vert)[0] = modvert[0];
-		(*vert)[1] = modvert[1];
-		(*vert)[2] = modvert[2];
+		std::cout<< "vert "<< f<< ": "<< modvert<< std::endl;
+		Vector3d v = Vector3d(modvert[0], modvert[1], modvert[2]);
+		rayPoly.addVertex(v);
 	}
-*/
+	for(int f = 0; f < p->NFaces(); f++){
+		Face copy = p->Faces()[f];
+		rayPoly.newFace(-1, copy.material);
+		//rayPoly.addFaceGroup(f, copy.group);	
+		for(int v = 0; v < copy.nverts; v++){
+			rayPoly.addFaceVert(f, copy.faceverts[v].v, copy.faceverts[v].n, copy.faceverts[v].u);
+		}
+		rayPoly.setFaceNormal(f);
+	}
+	for(int f = 0; f < p->NUVs(); f++){
+		Vector2d uv = p->UVs()[f];
+		rayPoly.addUV(uv);
+	}
+	for(int f = 0; f < p->NMaterials(); f++){
+		Material m = p->Materials()[f];
+		rayPoly.newMaterial(m.name);
+	}
+
+	//
+
 	float invT[16];
 	gluInvertMatrix(transform, invT);
 
@@ -483,8 +505,8 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 				 invT[4], invT[5], invT[6], invT[7],
 				 invT[8], invT[9], invT[10], invT[11],
 				 invT[12], invT[13], invT[14], invT[15]);
-/*
-	for(int n = 0; n < p->NNormals(); n++){
+
+/*	for(int n = 0; n < p->NNormals(); n++){
 		Vector3d *norm = &(p->Normals()[n]);
 		Vector4d modnorm = Vector4d((*norm)[0],(*norm)[1],(*norm)[2],1.);
 		modnorm = (invTransT * modnorm);
@@ -493,12 +515,12 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		(*norm)[2] = modnorm[2];
 	}
 */
-std::cerr << "matTrans:\n" << matTrans << std::endl;
+/*std::cerr << "matTrans:\n" << matTrans << std::endl;
 std::cerr << "invTransT:\n" << invTransT << std::endl;
 std::cerr << "camera trans dir: " << (matTrans * c->getDir()) << std::endl;
 std::cerr << "fuckityfuckfuck: " << ExtractCameraPos_NoScale(matTrans) << std::endl;
 std::cerr << std::endl;
-
+*/
 p->BuildBIHTree();	
 
 	/* read in camera attributes */
@@ -529,18 +551,17 @@ p->BuildBIHTree();
 	Height = Width/d2;
 	
 	Camera *cam = new Camera(*viewpoint, *face, *up, d1);
-	std::cout<< *cam << std::endl;
 	cam = c;
+	std::cout<< *cam << std::endl;
 
 	Vector4d burble(matTrans * c->getDir());
-std::cerr << "herro?" << std::endl;
 	Vector3d gurbleburble(burble[0],burble[1],burble[2]);
-	cam = new Camera(ExtractCameraPos_NoScale(matTrans),gurbleburble,Vector3d(0,1,0),0.5);
+	//cam = new Camera(ExtractCameraPos_NoScale(matTrans),gurbleburble,Vector3d(0,1,0),0.5);
 
-	cam = new Camera(Vector3d(-9.45, 0.246,17.6),Vector3d(-0.473,0.014,-0.881),Vector3d(0,1,0),0.5);
+	//cam = new Camera(Vector3d(-9.45, 0.246,17.6),Vector3d(-0.473,0.014,-0.881),Vector3d(0,1,0),0.5);
 
 
-	std::cout<< *cam << std::endl;
+	//std::cout<< *cam << std::endl;
 	//ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
 	pixmap = new Pixmap(Height, Width);
 	if(wFileExists)
@@ -555,7 +576,7 @@ std::cerr << "herro?" << std::endl;
 
 	//construct scene
 	PolySurf *object;
-	std::vector<Object*> scene = buildScene(p);
+	std::vector<Object*> scene = buildScene(&rayPoly);
 	
 	//raycast
 	int i, rows, j, cols, count=0;
@@ -600,9 +621,11 @@ std::cerr << "herro?" << std::endl;
 	Color shades[Nrays];
 
 	pz = -1. * cam->getFocalDistance();
-	for(i =0; i < rows; i++){
+	for(i = 0; i < rows; i++){
+//	for(i = rows/2; i < rows/2 + 1; i++){
 		py = (wh / -2.) + (ph * (i + 0.5));
 		for(j = 0; j < cols; j++){
+//		for(j = cols/2; j < cols/2 + 1; j++){
 			px = (ww / -2.) + (pw * (j + 0.5));
 			int n;
 			//supersampling loop
@@ -623,6 +646,7 @@ std::cerr << "herro?" << std::endl;
 					ur = (p - pin).normalize();
 				}
 				Ray r(pin, ur);
+				//std::cout<< "The ray: "<< r << std::endl;
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
