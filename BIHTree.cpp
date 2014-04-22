@@ -92,7 +92,7 @@ Collision BIHNode::RayCollide(const Ray &r, float tmin, float tmax, Faceptr face
   else{				  // ray is travleing to the left along the dividing axis
 	// if the ray lies completely within the region between the dividing planes
 	// then no collision, prune the rest of the tree
-	if(tr < tmin + SMALLNUMBER && tl > tmax - SMALLNUMBER && fabs(tr) != INFINITY)
+	if(tr < tmin + SMALLNUMBER && tl > tmax - SMALLNUMBER)
 	  return cr;
 	
 	// check for hit on right side if it lies in the ray interval

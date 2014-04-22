@@ -60,6 +60,45 @@ void startgraphics(int w, int h){
 	gluOrtho2D(0, w, 0, h);
 }
 
+void handleReshape2( int w, int h ) {
+	int basex = 0;
+	int basey = 0;
+	double lowerscale = 1.;
+
+	//Base viewport
+	glViewport(basex, basey, w, h);
+
+	//if the pixmap for the display isn't init'd carry on
+	if ( pixmap ) {
+		//if screen too small
+		if ((w < pixmap->NCols() ) || (h < pixmap->NRows())) {
+			double xscale = (double)w / (double)pixmap->NCols();
+			double yscale = (double)h / (double)pixmap->NRows();
+			
+			//scale by the one which needs to most change
+			lowerscale = (xscale < yscale) ? xscale : yscale;
+		}
+
+		//center image 
+		if( w > (lowerscale * pixmap->NCols()) ) {
+			basex = (w - (pixmap->NCols() * lowerscale))/2;
+		}
+		if( h > (lowerscale * pixmap->NRows()) ) {
+			basey = (h - (pixmap->NRows() * lowerscale))/2;
+		}
+		//set viewport at new coords
+		glViewport(basex, basey, (pixmap->NCols() * lowerscale), (pixmap->NRows() * lowerscale));
+	}
+  
+	glPixelZoom(lowerscale, lowerscale);
+  
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, w, 0, h);
+	glMatrixMode(GL_MODELVIEW);
+	return;
+}
+
 
 
 //returns index to closest hit object
@@ -96,13 +135,13 @@ Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 	diffuse = mat.d;
 	specular = mat.s;
 	int ui, vi, row, column, illum_model;
-	float alpha;
+	double alpha;
 
 	illum_model = mat.illum_model;
 	if(mat.amap){
 		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
 		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
-		alpha = ((float)mat.amap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.amap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.amap[0][vi][ui][0] / 255.,
 								(double)mat.amap[0][vi][ui][1] / 255.,	
 								(double)mat.amap[0][vi][ui][2] / 255.,
@@ -112,7 +151,7 @@ Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 	if(mat.dmap){
 		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NRows();
 		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
-		alpha = ((float)mat.dmap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.dmap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.dmap[0][vi][ui][0] / 255.,
 								(double)mat.dmap[0][vi][ui][1] / 255.,	
 								(double)mat.dmap[0][vi][ui][2] / 255.,
@@ -122,7 +161,7 @@ Color nonRecShade(Ray ray, Collision col, vector<Light*> lights){
 	if(mat.smap){
 		ui = (int)(mat.smap[0].NCols() * col.uv[0]) % mat.smap[0].NRows();
 		vi = (int)(mat.smap[0].NRows() * col.uv[1]) % mat.smap[0].NRows();
-		alpha = ((float)mat.smap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.smap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.smap[0][vi][ui][0] / 255.,
 								(double)mat.smap[0][vi][ui][1] / 255.,	
 								(double)mat.smap[0][vi][ui][2] / 255.,
@@ -179,14 +218,14 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 	diffuse = mat.d;
 	specular = mat.s;
 	int ui, vi, row, column, illum_model;
-	float alpha;
+	double alpha;
 
 	illum_model = mat.illum_model;
 
 	if(mat.amap){
 		ui = (int)(mat.amap[0].NCols() * col.uv[0]) % mat.amap[0].NCols();
 		vi = (int)(mat.amap[0].NRows() * col.uv[1]) % mat.amap[0].NRows();
-		alpha = ((float)mat.amap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.amap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.amap[0][vi][ui][0] / 255.,
 								(double)mat.amap[0][vi][ui][1] / 255.,	
 								(double)mat.amap[0][vi][ui][2] / 255.,
@@ -196,7 +235,7 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 	if(mat.dmap){
 		ui = (int)(mat.dmap[0].NCols() * col.uv[0]) % mat.dmap[0].NCols();
 		vi = (int)(mat.dmap[0].NRows() * col.uv[1]) % mat.dmap[0].NRows();
-		alpha = ((float)mat.dmap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.dmap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.dmap[0][vi][ui][0] / 255.,
 								(double)mat.dmap[0][vi][ui][1] / 255.,	
 								(double)mat.dmap[0][vi][ui][2] / 255.,
@@ -206,7 +245,7 @@ Color directShade(Ray ray, Collision col, Color lcolor, Vector3d ul, vector<Obje
 	if(mat.smap){
 		ui = (int)(mat.smap[0].NCols() * col.uv[0]) % mat.smap[0].NRows();
 		vi = (int)(mat.smap[0].NRows() * col.uv[1]) % mat.smap[0].NRows();
-		alpha = ((float)mat.smap[0][vi][ui][3] / 255.0);
+		alpha = ((double)mat.smap[0][vi][ui][3] / 255.0);
 		mapcolor = Color( (double)mat.smap[0][vi][ui][0] / 255.,
 								(double)mat.smap[0][vi][ui][1] / 255.,	
 								(double)mat.smap[0][vi][ui][2] / 255.,
@@ -306,7 +345,6 @@ vector<Object*> buildScene(PolySurf *p){
 
 	std::vector<Object*> scene(1);
 	scene.at(0) = (Object*) p;
-	p->BuildBIHTree();
 	return scene;
 }
 
@@ -468,93 +506,8 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 				 transform[2], transform[6], transform[10], transform[14],
 				 transform[3], transform[7], transform[11], transform[15]);
 
-	/*create mutated polysurf for raytracing
-	PolySurf rayPoly = PolySurf();
-	for(int f = 0; f < p->NVertices(); f++){
-		Vector3d *vert = &(p->Vertices()[f]);
-		Vector4d modvert = Vector4d((*vert)[0], (*vert)[1], (*vert)[2], 1.);
-		modvert = (matTrans * modvert);
-		Vector3d v = Vector3d(modvert[0], modvert[1], modvert[2]);
-		rayPoly.addVertex(v);
-	}
-	for(int f = 0; f < p->NGroups(); f++){
-		Group g = p->Groups()[f];
-		rayPoly.setGroup(g.name);
-	}
-	for(int f = 0; f < p->NFaces(); f++){
-		Face copy = p->Faces()[f];
-		rayPoly.newFace(-1, copy.material);
-		//rayPoly.addFaceGroup(f, copy.group);	
-		for(int v = 0; v < copy.nverts; v++){
-			rayPoly.addFaceVert(f, copy.faceverts[v].v, copy.faceverts[v].n, copy.faceverts[v].u);
-		}
-		rayPoly.setFaceNormal(f);
-	}
-	for(int f = 0; f < p->NNormals(); f++){
-		Vector3d normal = p->Normals()[f];
-		rayPoly.addNormal(normal);
-	}
-	for(int f = 0; f < p->NUVs(); f++){
-		Vector2d uv = p->UVs()[f];
-		rayPoly.addUV(uv);
-	}
-	for(int f = 0; f < p->NMaterials(); f++){
-		Material m = p->Materials()[f];
-		rayPoly.newMaterial(m.name);
-		rayPoly.Materials()[f] = m;
-	}*/
-
-	//
-
-	float invT[16];
-	gluInvertMatrix(transform, invT);
-
-	Matrix4x4 invTransT;
-	invTransT = Matrix4x4(invT[0], invT[1], invT[2], invT[3],
-				 invT[4], invT[5], invT[6], invT[7],
-				 invT[8], invT[9], invT[10], invT[11],
-				 invT[12], invT[13], invT[14], invT[15]);
-
-/*	for(int n = 0; n < p->NNormals(); n++){
-		Vector3d *norm = &(p->Normals()[n]);
-		Vector4d modnorm = Vector4d((*norm)[0],(*norm)[1],(*norm)[2],1.);
-		modnorm = (invTransT * modnorm);
-		(*norm)[0] = modnorm[0];
-		(*norm)[1] = modnorm[1];
-		(*norm)[2] = modnorm[2];
-	}
-*/
-/*std::cerr << "matTrans:\n" << matTrans << std::endl;
-std::cerr << "invTransT:\n" << invTransT << std::endl;
-std::cerr << "camera trans dir: " << (matTrans * c->getDir()) << std::endl;
-std::cerr << "fuckityfuckfuck: " << ExtractCameraPos_NoScale(matTrans) << std::endl;
-std::cerr << std::endl;
-*/
-p->BuildBIHTree();	
-
-/*	// read in camera attributes 
-	double d1, d2, d3;
-	char view;
-	Vector3d *viewpoint, *face, *up;
-	std::ifstream attributes("camera.txt");
-	if(!attributes.is_open()){
-		std::cerr<< "Could not open attributes file" <<std::endl;
-		exit(-1);
-	}
-
-	attributes >> d1 >> d2 >> d3;	
-	viewpoint = new Vector3d(d1,d2,d3);
-	attributes >> d1 >> d2 >> d3;	
-	face = new Vector3d(d1,d2,d3);
-	*face = face->normalize();
-	attributes >> d1 >> d2 >> d3;	
-	up = new Vector3d(d1,d2,d3);
-	attributes >> d1 >> d2 >> d3;	
-	attributes >> view;
-*/
 
 	orthographic = ortho;
-
 
 	//Adjust pixel height accordinglly
 	Height = Width*(worldheight/worldwidth);
@@ -563,15 +516,6 @@ p->BuildBIHTree();
 	Camera *cam = c;
 	std::cout<< "Camera: " << *cam<< std::endl;
 
-	Vector4d burble(matTrans * c->getDir());
-	Vector3d gurbleburble(burble[0],burble[1],burble[2]);
-	//cam = new Camera(ExtractCameraPos_NoScale(matTrans),gurbleburble,Vector3d(0,1,0),0.5);
-
-	//cam = new Camera(Vector3d(-9.45, 0.246,17.6),Vector3d(-0.473,0.014,-0.881),Vector3d(0,1,0),0.5);
-
-
-	//std::cout<< *cam << std::endl;
-	//ViewScreen *vs = new ViewScreen(Width, Height, d3, d3/d2);
 	pixmap = new Pixmap(Height, Width);
 	if(wFileExists)
 		img->setpixmap(pixmap);
@@ -635,10 +579,8 @@ p->BuildBIHTree();
 
 	pz = -1. * cam->getFocalDistance();
 	for(i = 0; i < rows; i++){
-//	for(i = rows/2; i < rows/2 + 1; i++){
 		py = (wh / -2.) + (ph * (i + 0.5));
 		for(j = 0; j < cols; j++){
-//		for(j = cols/2; j < cols/2 + 1; j++){
 			px = (ww / -2.) + (pw * (j + 0.5));
 			int n;
 			//supersampling loop
@@ -658,8 +600,8 @@ p->BuildBIHTree();
 				else{
 					ur = (p - pin).normalize();
 				}
+				Vector3d nohit = Vector3d(-0.42363566508318828, -0.31759419697725882, -0.8483317448474359);
 				Ray r(pin, ur);
-				//std::cout<< "The ray: "<< r << std::endl;
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
@@ -687,6 +629,7 @@ p->BuildBIHTree();
 	
 	std::cout<< "count: " << count << std::endl;
 	glutDisplayFunc(drawScreen2);
+	glutReshapeFunc(handleReshape2);
 	glutKeyboardFunc(handleKey2);
 	glutMainLoop();
 
