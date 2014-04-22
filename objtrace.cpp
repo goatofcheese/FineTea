@@ -455,7 +455,7 @@ Vector3d ExtractCameraPos_NoScale(const Matrix4x4 &a_modelView)
   return retVec;
 }
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform, Vector3d lightpos){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform, std::vector<Vector3d> lightpos){
 
 	sn = svn;
 	wfe = wFileExists;
@@ -612,7 +612,7 @@ p->BuildBIHTree();
 	//Arrange Lights
 	//cube Vector3d lightpos(3, 0, 0);
 	//Vector3d lightpos(100, 100, 100);
-	Color lightcol(0.8, 0.8, 0.8, 1.);
+	Color lightcol(0.9, 0.9, 0.9, 1.);
 /*	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);
 	lights.at(1) = new PointLight(lightcol, Vector3d(-20.0, 0.9, -5));
@@ -620,9 +620,13 @@ p->BuildBIHTree();
 	lights.at(3) = new PointLight(lightcol, Vector3d(-20, -20, 20));
 	lights.at(4) = new PointLight(lightcol, Vector3d(20, -22, 18));
 */
-	std::vector<Light*> lights(2);
-	lights.at(0) = new PointLight(lightcol, lightpos);
-	lights.at(1) = new PointLight(lightcol, Vector3d(-100, -100, 100));
+	std::vector<Light*> lights;
+	lights.reserve(lightpos.size());
+	for(std::vector<Vector3d>::iterator iter = lightpos.begin(); iter != lightpos.end(); ++iter){
+	    std::cout << "and over here lightpos: " << (*iter) << std::endl;
+	    lights.push_back(new PointLight(lightcol,(*iter)));
+//	    lights.push_back(new PointLight(lightcol,Vector3d(100,100,100)));
+	}
 
 	//shoot a ray through each pixel	
 	center = (pin + (cam->getDir() * cam->getFocalDistance()));

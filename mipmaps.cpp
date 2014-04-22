@@ -129,7 +129,9 @@ static int TextureMode;
 static int ColorMode;
 
 // light
-static Vector3d rt_lightpos(100, 100, 100);
+const int NUMLIGHTS = 2;
+static std::vector<Vector3d> gl_lightspos;
+static std::vector<Vector3d> rt_lightspos;
 
 
 // Texture map to be used by program
@@ -308,7 +310,7 @@ void drawModel(int wireframe){
 //
 void doDisplay(){
 	// distant light source, parallel rays coming from front upper right
-	const float light_position[] = {100, 100, 100, 0};
+	float light_position[4];// = {100, 100, 100, 0};
   
 	// clear the window to the background color
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -323,10 +325,35 @@ void doDisplay(){
   
 	// light is positioned in camera space so it does not move with object
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, WHITE);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, WHITE);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, WHITE);
+
+	int i = 0;
+	for(std::vector<Vector3d>::iterator iter = gl_lightspos.begin(); iter != gl_lightspos.end(); ++iter){
+	std::cerr << "in the light making loop";
+	    light_position[0] = (*iter)[0];
+	    light_position[1] = (*iter)[1];
+	    light_position[2] = (*iter)[2];
+	    light_position[3] = 0;
+	    int n = 0;
+	    switch(i){
+		    case 0:
+			    std::cerr << "making light 0" << std::endl;
+			    n = GL_LIGHT0;
+			    break;
+		    case 1:
+			    std::cerr << "making light 1" << std::endl;
+			    n = GL_LIGHT1;
+			    break;
+		    case 2:
+			    std::cerr << "making light 2" << std::endl;
+			    n = GL_LIGHT2;
+			    break;
+	    }
+	    i++; 
+	    glLightfv(n, GL_POSITION, light_position);
+	    glLightfv(n, GL_AMBIENT, WHITE);
+	    glLightfv(n, GL_DIFFUSE, WHITE);
+	    glLightfv(n, GL_SPECULAR, WHITE);
+	}
 
 	// establish camera coordinates
 	glRotatef(Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
@@ -338,16 +365,6 @@ void doDisplay(){
 	glRotatef(ThetaY, 0, 1, 0);       // rotate model about x axis
 	glRotatef(ThetaX, 1, 0, 0);       // rotate model about y axis
 	
-/*	glPushMatrix();
-		glLoadIdentity();
-		glRotatef(-Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
-		glRotatef(-Pan, 0, 1, 0);	    // pan - rotate camera about y axis
-		glTranslatef(0, 0, -Approach);     // approach - translate camera along z axis
-		glRotatef(-ThetaY, 0, 1, 0);       // rotate model about x axis
-		glRotatef(-ThetaX, 1, 0, 0);       // rotate model about y axis
-		GLfloat pj[16];
-		glGetFloatv (GL_MODELVIEW_MATRIX, mv);
-	glPopMatrix();*/
 	glPushMatrix();
 		glLoadIdentity();
 		glRotatef(-ThetaX, 1, 0, 0);       // rotate model about y axis
@@ -372,17 +389,22 @@ void doDisplay(){
 	camDir4 = m4 * camDir4;
 	Vector4d camUp4 = Vector4d(0., 1, 0., 0.);
 	camUp4 = m4 * camUp4;
-	Vector4d rt_lightpos4 = Vector4d(100,100,100,1);
-	rt_lightpos4 = m4 * rt_lightpos4;
+
+	rt_lightspos.clear();
+	for(std::vector<Vector3d>::iterator iter = gl_lightspos.begin(); iter != gl_lightspos.end(); ++iter){
+	    Vector4d rt_lightpos4 = Vector4d((*iter)[0],(*iter)[1],(*iter)[2],1);
+	    rt_lightpos4 = m4 * rt_lightpos4;
+	    rt_lightspos.push_back(Vector3d(rt_lightpos4[0],rt_lightpos4[1],rt_lightpos4[2]));
+	}
+
 	
 	camPos3 = Vector3d(camPos4[0], camPos4[1], camPos4[2]);
 	camDir3 = Vector3d(camDir4[0], camDir4[1], camDir4[2]);
 	camUp3 = Vector3d(camUp4[0], camUp4[1], camUp4[2]);
-	rt_lightpos = Vector3d(rt_lightpos4[0],rt_lightpos4[1],rt_lightpos4[2]);
 
 	std::cout<< "position: " << camPos3<< std::endl;
 	std::cout<< "direction: " << camDir3<< std::endl;
-	std::cout << "lightpos: " << rt_lightpos << std::endl;
+	std::cout << "lightspos: " << rt_lightspos.front() << std::endl;
 	std::cout << std::endl;
 	cam->setDir(camDir3);
 	cam->setPinhole(camPos3);
@@ -442,7 +464,8 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightpos);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightspos);
+			//raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightpos);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
@@ -544,6 +567,8 @@ void initialize(){
   
 	// position light and turn it on
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
   
 	// initialize viewing and model parameters
 	setInitialState();
@@ -594,6 +619,10 @@ int main(int argc, char* argv[]){
 	}
 
 	args = argv;
+
+	//add to the lights vector
+	gl_lightspos.push_back(Vector3d(100,100,100));
+	gl_lightspos.push_back(Vector3d(-100,-100,80));
 
 	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0., 0., -1.), Vector3d(0., 1., 0.), 1.0);
 	// start up the glut utilities
