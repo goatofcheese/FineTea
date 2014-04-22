@@ -144,6 +144,7 @@ Camera *cam;
 char **args;
 Vector3d camPos3;
 Vector3d camDir3;
+Vector3d camUp3;
 
 //ModelView matrix in Matrix4x4 form to change the rays of the raytracer
 static Matrix4x4 idklel;
@@ -366,13 +367,17 @@ void doDisplay(){
 	camPos4 = m4 * camPos4;
 	Vector4d camDir4 = Vector4d(0., 0, -1., 0.);
 	camDir4 = m4 * camDir4;
+	Vector4d camUp4 = Vector4d(0., 1, 0., 0.);
+	camUp4 = m4 * camUp4;
 	
 	camPos3 = Vector3d(camPos4[0], camPos4[1], camPos4[2]);
 	camDir3 = Vector3d(camDir4[0], camDir4[1], camDir4[2]);
+	camUp3 = Vector3d(camUp4[0], camUp4[1], camUp4[2]);
 	std::cout<< "position: " << camPos3<< std::endl;
 	std::cout<< "direction: " << camDir3<< std::endl;
 	cam->setDir(camDir3);
 	cam->setPinhole(camPos3);
+	cam->setUp(camUp3);
 
 	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],								 pj[1], pj[5], pj[9], pj[13],
 				 pj[2], pj[6], pj[10], pj[14],
