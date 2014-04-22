@@ -16,6 +16,10 @@ public:
 	Vector3d getDir();
 	Vector3d getUp();
 	double getFocalDistance ();
+	void setPinhole(const Vector3d p){ pinhole = p; }
+	void setDir(const Vector3d d){ dir = d; }
+	void setUp(const Vector3d u){ up = u; }
+	void setFocalDistance(const double fd){ focalDistance = fd; }
 
 private:
 	Vector3d pinhole;

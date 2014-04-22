@@ -142,6 +142,8 @@ OBJFile objfile;
 PolySurf *psurf;
 Camera *cam;
 char **args;
+Vector3d camPos3;
+Vector3d camDir3;
 
 //ModelView matrix in Matrix4x4 form to change the rays of the raytracer
 static Matrix4x4 idklel;
@@ -301,7 +303,7 @@ void drawModel(int wireframe){
 //
 void doDisplay(){
 	// distant light source, parallel rays coming from front upper right
-	const float light_position[] = {1, 1, 1, 0};
+	const float light_position[] = {100, 100, 100, 0};
   
 	// clear the window to the background color
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -331,16 +333,45 @@ void doDisplay(){
 	glRotatef(ThetaY, 0, 1, 0);       // rotate model about x axis
 	glRotatef(ThetaX, 1, 0, 0);       // rotate model about y axis
 	
-	GLfloat pj[16];
-	glGetFloatv (GL_MODELVIEW_MATRIX, mv);
-	glGetFloatv (GL_PROJECTION_MATRIX, pj);
+/*	glPushMatrix();
+		glLoadIdentity();
+		glRotatef(-Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
+		glRotatef(-Pan, 0, 1, 0);	    // pan - rotate camera about y axis
+		glTranslatef(0, 0, -Approach);     // approach - translate camera along z axis
+		glRotatef(-ThetaY, 0, 1, 0);       // rotate model about x axis
+		glRotatef(-ThetaX, 1, 0, 0);       // rotate model about y axis
+		GLfloat pj[16];
+		glGetFloatv (GL_MODELVIEW_MATRIX, mv);
+	glPopMatrix();*/
+	glPushMatrix();
+		glLoadIdentity();
+		glRotatef(-ThetaX, 1, 0, 0);       // rotate model about y axis
+		glRotatef(-ThetaY, 0, 1, 0);       // rotate model about x axis
+		glTranslatef(0, 0, -Approach);     // approach - translate camera along z axis
+		glRotatef(-Pan, 0, 1, 0);	    // pan - rotate camera about y axis
+		glRotatef(-Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
+		GLfloat pj[16];
+		glGetFloatv (GL_MODELVIEW_MATRIX, mv);
+	glPopMatrix();
 
-	
 	//opengl is column major, matrix library row major
-	Matrix4x4 m4 = Matrix4x4(mv[0], mv[4], mv[8], mv[12],								 mv[1], mv[5], mv[9], mv[13],
+	Matrix4x4 m4 = Matrix4x4(mv[0], mv[4], mv[8], mv[12],
+				 mv[1], mv[5], mv[9], mv[13],
 				 mv[2], mv[6], mv[10], mv[14],
 				 mv[3], mv[7], mv[11], mv[15]);
+	std::cout<< "cam mod matrix: "<< std::endl<< m4<< std::endl;
 
+	Vector4d camPos4 = Vector4d(0., 0., 0., 1.);
+	camPos4 = m4 * camPos4;
+	Vector4d camDir4 = Vector4d(0., 0, -1., 0.);
+	camDir4 = m4 * camDir4;
+	
+	camPos3 = Vector3d(camPos4[0], camPos4[1], camPos4[2]);
+	camDir3 = Vector3d(camDir4[0], camDir4[1], camDir4[2]);
+	std::cout<< "position: " << camPos3<< std::endl;
+	std::cout<< "direction: " << camDir3<< std::endl;
+	cam->setDir(camDir3);
+	cam->setPinhole(camPos3);
 
 	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],								 pj[1], pj[5], pj[9], pj[13],
 				 pj[2], pj[6], pj[10], pj[14],
@@ -517,9 +548,6 @@ void initialize(){
 	//DRAWHEIGHT = DRAWWIDTH / (Height/Width);
 	//DEPTH = propor / -4.;
 
-	//Make camera
-	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0.,0.,-1.0), Vector3d(0.,1.,0.), 1.0);
-
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
 	//	       0, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage);  
@@ -555,6 +583,8 @@ int main(int argc, char* argv[]){
 	}
 
 	args = argv;
+
+	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0., 0., -1.), Vector3d(0., 1., 0.), 1.0);
 	// start up the glut utilities
 	glutInit(&argc, argv);
   

@@ -277,17 +277,20 @@ Color recShade(Ray r, Collision col, int level, vector<Object*> scene, vector<Li
 	refVec = (col.x - r.p) - (2 * (col.n * (col.x - r.p)) * col.n);
 	refVec = refVec.normalize();
 
-	//shoot reflection vector
-	Ray refRay(col.x, refVec);
-	Collision refcol = shoot(refRay, scene);
+//	if((col.n * (r.p - col.x) > 0)){
+		//shoot reflection vector 
+		Ray refRay(col.x, refVec);
+		Collision refcol = shoot(refRay, scene);
+	
 
+		if(refcol.t != INFINITY){
+			recCol = recShade(refRay, refcol, level + 1, scene, lights);
+			color = color + recCol;
+			recCol = directShade(r, col, color, refcol.x - col.x, scene);
+			color = color + recCol;
+		}
 
-	if(refcol.t != INFINITY){
-		recCol = recShade(refRay, refcol, level + 1, scene, lights);
-		color = color + recCol;
-		recCol = directShade(r, col, color, refcol.x - col.x, scene);
-		color = color + recCol;
-	}
+//	}
 
 	for(int i = 0; i < 3; i++){
 		if(color[i] >= 1.0)
@@ -465,7 +468,7 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 					 transform[2], transform[6], transform[10], transform[14],
 					 transform[3], transform[7], transform[11], transform[15]);
 
-	//create mutated polysurf for raytracing
+	/*create mutated polysurf for raytracing
 	PolySurf rayPoly = PolySurf();
 	for(int f = 0; f < p->NVertices(); f++){
 		Vector3d *vert = &(p->Vertices()[f]);
@@ -499,7 +502,7 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 		Material m = p->Materials()[f];
 		rayPoly.newMaterial(m.name);
 		rayPoly.Materials()[f] = m;
-	}
+	}*/
 
 	//
 
@@ -558,6 +561,7 @@ p->BuildBIHTree();
 	
 	//Camera *cam = new Camera(*viewpoint, *face, *up, d1);
 	Camera *cam = c;
+	std::cout<< "Camera: " << *cam<< std::endl;
 
 	Vector4d burble(matTrans * c->getDir());
 	Vector3d gurbleburble(burble[0],burble[1],burble[2]);
@@ -580,8 +584,7 @@ p->BuildBIHTree();
 	startgraphics(Width, Height);
 
 	//construct scene
-	PolySurf *object;
-	std::vector<Object*> scene = buildScene(&rayPoly);
+	std::vector<Object*> scene = buildScene(p);
 	
 	//raycast
 	int i, rows, j, cols, count=0;
@@ -608,7 +611,7 @@ p->BuildBIHTree();
 
 	//Arrange Lights
 	//cube Vector3d lightpos(3, 0, 0);
-	Vector3d lightpos(1, 1, 1);
+	Vector3d lightpos(100, 100, 100);
 	Color lightcol(0.8, 0.8, 0.8, 1.);
 /*	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);
@@ -617,8 +620,9 @@ p->BuildBIHTree();
 	lights.at(3) = new PointLight(lightcol, Vector3d(-20, -20, 20));
 	lights.at(4) = new PointLight(lightcol, Vector3d(20, -22, 18));
 */
-	std::vector<Light*> lights(1);
+	std::vector<Light*> lights(2);
 	lights.at(0) = new PointLight(lightcol, lightpos);
+	lights.at(1) = new PointLight(lightcol, Vector3d(-100, -100, 100));
 
 	//shoot a ray through each pixel	
 	center = (pin + (cam->getDir() * cam->getFocalDistance()));
@@ -655,8 +659,8 @@ p->BuildBIHTree();
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
-					//shades[n] = recShade(r, closest, 0, scene, lights);
-					shades[n] = nonRecShade(r, closest, lights);
+					shades[n] = recShade(r, closest, 0, scene, lights);
+					//shades[n] = nonRecShade(r, closest, lights);
 
 				}
 				else{
