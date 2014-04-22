@@ -360,6 +360,7 @@ void doDisplay(){
 				 mv[2], mv[6], mv[10], mv[14],
 				 mv[3], mv[7], mv[11], mv[15]);
 	std::cout<< "cam mod matrix: "<< std::endl<< m4<< std::endl;
+	std::cout<< "Theta X: "<< ThetaX<< std::endl;
 
 	Vector4d camPos4 = Vector4d(0., 0., 0., 1.);
 	camPos4 = m4 * camPos4;
