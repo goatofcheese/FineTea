@@ -25,4 +25,4 @@
 #endif
 
 
-void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, double, bool, GLfloat *);
+void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, double, bool, GLfloat *, Vector3d);

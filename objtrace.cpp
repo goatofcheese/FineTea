@@ -455,7 +455,7 @@ Vector3d ExtractCameraPos_NoScale(const Matrix4x4 &a_modelView)
   return retVec;
 }
 
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform, Vector3d lightpos){
 
 	sn = svn;
 	wfe = wFileExists;
@@ -464,9 +464,9 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 
 	Matrix4x4 matTrans;
 	matTrans = Matrix4x4(transform[0], transform[4], transform[8], transform[12],
-					 transform[1], transform[5], transform[9], transform[13],
-					 transform[2], transform[6], transform[10], transform[14],
-					 transform[3], transform[7], transform[11], transform[15]);
+				 transform[1], transform[5], transform[9], transform[13],
+				 transform[2], transform[6], transform[10], transform[14],
+				 transform[3], transform[7], transform[11], transform[15]);
 
 	/*create mutated polysurf for raytracing
 	PolySurf rayPoly = PolySurf();
@@ -611,7 +611,7 @@ p->BuildBIHTree();
 
 	//Arrange Lights
 	//cube Vector3d lightpos(3, 0, 0);
-	Vector3d lightpos(100, 100, 100);
+	//Vector3d lightpos(100, 100, 100);
 	Color lightcol(0.8, 0.8, 0.8, 1.);
 /*	std::vector<Light*> lights(5);
 	lights.at(0) = new PointLight(lightcol, lightpos);

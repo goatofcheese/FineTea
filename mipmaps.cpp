@@ -128,6 +128,10 @@ static int SmoothShading;
 static int TextureMode;
 static int ColorMode;
 
+// light
+static Vector3d rt_lightpos(100, 100, 100);
+
+
 // Texture map to be used by program
 static GLuint TextureID;	    // texture ID from OpenGL
 static unsigned char *TextureImage;   // pixmap for texture image
@@ -369,17 +373,24 @@ void doDisplay(){
 	camDir4 = m4 * camDir4;
 	Vector4d camUp4 = Vector4d(0., 1, 0., 0.);
 	camUp4 = m4 * camUp4;
+	Vector4d rt_lightpos4 = Vector4d(100,100,100,1);
+	rt_lightpos4 = m4 * rt_lightpos4;
 	
 	camPos3 = Vector3d(camPos4[0], camPos4[1], camPos4[2]);
 	camDir3 = Vector3d(camDir4[0], camDir4[1], camDir4[2]);
 	camUp3 = Vector3d(camUp4[0], camUp4[1], camUp4[2]);
+	rt_lightpos = Vector3d(rt_lightpos4[0],rt_lightpos4[1],rt_lightpos4[2]);
+
 	std::cout<< "position: " << camPos3<< std::endl;
 	std::cout<< "direction: " << camDir3<< std::endl;
+	std::cout << "lightpos: " << rt_lightpos << std::endl;
+	std::cout << std::endl;
 	cam->setDir(camDir3);
 	cam->setPinhole(camPos3);
 	cam->setUp(camUp3);
 
-	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],								 pj[1], pj[5], pj[9], pj[13],
+	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],
+				 pj[1], pj[5], pj[9], pj[13],
 				 pj[2], pj[6], pj[10], pj[14],
 				 pj[3], pj[7], pj[11], pj[15]);
 
@@ -437,7 +448,7 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightpos);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
