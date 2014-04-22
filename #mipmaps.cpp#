@@ -401,18 +401,6 @@ Vector4d test = Vector4d(0.,0.,-1.,1.);
 	glutSwapBuffers();
 }
 
-//
-// Reshape Callback
-// Keep viewport the entire screen
-//
-void doReshape(int width, int height){
-  
-	glViewport(0, 0, width, height);
-	Width = width;
-	Height = height;
-	
-	updateProjection();
-}
 
 // Keyboard callback routine. 
 // Set various modes or take actions based on key presses
@@ -454,8 +442,6 @@ void handleKey(unsigned char key, int x, int y){
 
 		case 'r':
 		case 'R':
-			doReshape(Width, Height);
-			updateProjection();
 			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightpos);
 			break;
       
@@ -531,6 +517,19 @@ void handleMotion(int x, int y){
 }
 
 //
+// Reshape Callback
+// Keep viewport the entire screen
+//
+void doReshape(int width, int height){
+  
+	glViewport(0, 0, width, height);
+	Width = width;
+	Height = height;
+	
+	updateProjection();
+}
+
+//
 // Initialize OpenGL to establish lighting and colors
 // and initialize viewing and model parameter
 //
@@ -556,6 +555,9 @@ void initialize(){
  
 	psurf = objfile.getscene();
 	double propor = (psurf->GetBBox().bounds[1] - psurf->GetBBox().bounds[0]).norm();
+	//DRAWWIDTH = propor;
+	//DRAWHEIGHT = DRAWWIDTH / (Height/Width);
+	//DEPTH = propor / -4.;
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
