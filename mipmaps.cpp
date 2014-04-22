@@ -351,7 +351,6 @@ void doDisplay(){
 		glTranslatef(0, 0, -Approach);     // approach - translate camera along z axis
 		glRotatef(-Pan, 0, 1, 0);	    // pan - rotate camera about y axis
 		glRotatef(-Tilt, 1, 0, 0);	    // tilt - rotate camera about x axis
-		GLfloat pj[16];
 		glGetFloatv (GL_MODELVIEW_MATRIX, mv);
 	glPopMatrix();
 
@@ -379,9 +378,7 @@ void doDisplay(){
 	cam->setPinhole(camPos3);
 	cam->setUp(camUp3);
 
-	idklel = Matrix4x4(pj[0], pj[4], pj[8], pj[12],								 pj[1], pj[5], pj[9], pj[13],
-				 pj[2], pj[6], pj[10], pj[14],
-				 pj[3], pj[7], pj[11], pj[15]);
+
 
 Vector4d test = Vector4d(0.,0.,-1.,1.);
 //std::cerr << "idklel" << idklel << std::endl;

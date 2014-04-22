@@ -659,8 +659,8 @@ p->BuildBIHTree();
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
-					shades[n] = recShade(r, closest, 0, scene, lights);
-					//shades[n] = nonRecShade(r, closest, lights);
+					//shades[n] = recShade(r, closest, 0, scene, lights);
+					shades[n] = nonRecShade(r, closest, lights);
 
 				}
 				else{

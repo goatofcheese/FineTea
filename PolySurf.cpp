@@ -191,7 +191,9 @@ Collision PolySurf::RayCollide(const Ray &r) const{
   if(c.t != INFINITY) {
 	c = bihtree->RayCollide(r);
   }
-
+//	if(c.t != INFINITY)
+//		if(c.m->name[0] == 'r')
+//			std::cout<< c << std::endl;
   return c;
 }
 
