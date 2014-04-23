@@ -1,8 +1,6 @@
 #
 #  mats.mtl
 # 
-#  Created by Donald House on 2/26/11.
-#  Copyright 2011 Clemson University. All rights reserved.
 #
 
 newmtl green
@@ -16,3 +14,18 @@ Kd 0.8000 0.8000 0.8000
 illum 1
 map_Ka brazil-flag.png
 map_Kd brazil-flag.png
+
+newmtl doge
+Ka 0.3000 0.3000 0.3000
+Kd 0.8000 0.8000 0.8000
+illum 1
+map_Ka doge.png
+map_Kd doge.png
+
+newmtl wood
+Ka 0.3000 0.3000 0.3000
+Kd 0.1000 0.1000 0.1000
+Ks 0. 0. 0.
+illum 2
+map_Ka wood.png
+map_Kd wood.png

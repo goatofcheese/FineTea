@@ -168,8 +168,11 @@ Collision Face::QuadCollide(const Collision &c, PolySurf *p) const{
   ctri = TriCollide(c, verts, p);
 
   if(ctri.t == INFINITY){
-	for(int i = 0; i < 3; i++)
-	  verts[i] = faceverts[(i + 2) % 4];
+//	for(int i = 0; i < 3; i++)
+//	  verts[i] = faceverts[(i + 2) % 4];
+	verts[0] = faceverts[0];
+	verts[1] = faceverts[2];
+	verts[2] = faceverts[3];
 	ctri = TriCollide(c, verts, p);	
   }
   

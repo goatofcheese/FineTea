@@ -1,6 +1,7 @@
 /*
 James Wells
-CpSc 405 HW 5
+Stephen Wells
+CpSc 405 HW 6
 Main Driver
 
 Usage:
@@ -348,156 +349,10 @@ vector<Object*> buildScene(PolySurf *p){
 	return scene;
 }
 
-bool gluInvertMatrix(const float m[16], float invOut[16]){
-    float inv[16], det;
-    int i;
-
-    inv[0] = m[5]  * m[10] * m[15] - 
-             m[5]  * m[11] * m[14] - 
-             m[9]  * m[6]  * m[15] + 
-             m[9]  * m[7]  * m[14] +
-             m[13] * m[6]  * m[11] - 
-             m[13] * m[7]  * m[10];
-
-    inv[4] = -m[4]  * m[10] * m[15] + 
-              m[4]  * m[11] * m[14] + 
-              m[8]  * m[6]  * m[15] - 
-              m[8]  * m[7]  * m[14] - 
-              m[12] * m[6]  * m[11] + 
-              m[12] * m[7]  * m[10];
-
-    inv[8] = m[4]  * m[9] * m[15] - 
-             m[4]  * m[11] * m[13] - 
-             m[8]  * m[5] * m[15] + 
-             m[8]  * m[7] * m[13] + 
-             m[12] * m[5] * m[11] - 
-             m[12] * m[7] * m[9];
-
-    inv[12] = -m[4]  * m[9] * m[14] + 
-               m[4]  * m[10] * m[13] +
-               m[8]  * m[5] * m[14] - 
-               m[8]  * m[6] * m[13] - 
-               m[12] * m[5] * m[10] + 
-               m[12] * m[6] * m[9];
-
-    inv[1] = -m[1]  * m[10] * m[15] + 
-              m[1]  * m[11] * m[14] + 
-              m[9]  * m[2] * m[15] - 
-              m[9]  * m[3] * m[14] - 
-              m[13] * m[2] * m[11] + 
-              m[13] * m[3] * m[10];
-
-    inv[5] = m[0]  * m[10] * m[15] - 
-             m[0]  * m[11] * m[14] - 
-             m[8]  * m[2] * m[15] + 
-             m[8]  * m[3] * m[14] + 
-             m[12] * m[2] * m[11] - 
-             m[12] * m[3] * m[10];
-
-    inv[9] = -m[0]  * m[9] * m[15] + 
-              m[0]  * m[11] * m[13] + 
-              m[8]  * m[1] * m[15] - 
-              m[8]  * m[3] * m[13] - 
-              m[12] * m[1] * m[11] + 
-              m[12] * m[3] * m[9];
-
-    inv[13] = m[0]  * m[9] * m[14] - 
-              m[0]  * m[10] * m[13] - 
-              m[8]  * m[1] * m[14] + 
-              m[8]  * m[2] * m[13] + 
-              m[12] * m[1] * m[10] - 
-              m[12] * m[2] * m[9];
-
-    inv[2] = m[1]  * m[6] * m[15] - 
-             m[1]  * m[7] * m[14] - 
-             m[5]  * m[2] * m[15] + 
-             m[5]  * m[3] * m[14] + 
-             m[13] * m[2] * m[7] - 
-             m[13] * m[3] * m[6];
-
-    inv[6] = -m[0]  * m[6] * m[15] + 
-              m[0]  * m[7] * m[14] + 
-              m[4]  * m[2] * m[15] - 
-              m[4]  * m[3] * m[14] - 
-              m[12] * m[2] * m[7] + 
-              m[12] * m[3] * m[6];
-
-    inv[10] = m[0]  * m[5] * m[15] - 
-              m[0]  * m[7] * m[13] - 
-              m[4]  * m[1] * m[15] + 
-              m[4]  * m[3] * m[13] + 
-              m[12] * m[1] * m[7] - 
-              m[12] * m[3] * m[5];
-
-    inv[14] = -m[0]  * m[5] * m[14] + 
-               m[0]  * m[6] * m[13] + 
-               m[4]  * m[1] * m[14] - 
-               m[4]  * m[2] * m[13] - 
-               m[12] * m[1] * m[6] + 
-               m[12] * m[2] * m[5];
-
-    inv[3] = -m[1] * m[6] * m[11] + 
-              m[1] * m[7] * m[10] + 
-              m[5] * m[2] * m[11] - 
-              m[5] * m[3] * m[10] - 
-              m[9] * m[2] * m[7] + 
-              m[9] * m[3] * m[6];
-
-    inv[7] = m[0] * m[6] * m[11] - 
-             m[0] * m[7] * m[10] - 
-             m[4] * m[2] * m[11] + 
-             m[4] * m[3] * m[10] + 
-             m[8] * m[2] * m[7] - 
-             m[8] * m[3] * m[6];
-
-    inv[11] = -m[0] * m[5] * m[11] + 
-               m[0] * m[7] * m[9] + 
-               m[4] * m[1] * m[11] - 
-               m[4] * m[3] * m[9] - 
-               m[8] * m[1] * m[7] + 
-               m[8] * m[3] * m[5];
-
-    inv[15] = m[0] * m[5] * m[10] - 
-              m[0] * m[6] * m[9] - 
-              m[4] * m[1] * m[10] + 
-              m[4] * m[2] * m[9] + 
-              m[8] * m[1] * m[6] - 
-              m[8] * m[2] * m[5];
-
-    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-
-    if (det == 0)
-        return false;
-
-    det = 1.0 / det;
-
-    for (i = 0; i < 16; i++)
-        invOut[i] = inv[i] * det;
-
-    return true;
-}
-
-Vector3d ExtractCameraPos_NoScale(const Matrix4x4 &a_modelView)
-{
-/*  Matrix3x3 rotMat(a_modelView[0],a_modelView[1],a_modelView[2],
-			a_modelView[4], a_modelView[5], a_modelView[6],
-			a_modelView[8], a_modelView[9], a_modelView[10]);
-*/
-  Matrix3x3 rotMat(a_modelView[0][0], a_modelView[0][1], a_modelView[0][2],
-		a_modelView[1][0], a_modelView[1][1], a_modelView[1][2],
-		a_modelView[2][0], a_modelView[2][1], a_modelView[2][2]);
-
-  Vector3d d(a_modelView[0][3], a_modelView[1][3], a_modelView[2][3]);
- 
-  Vector3d retVec = -d * rotMat;
-  return retVec;
-}
-
-void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform, std::vector<Vector3d> lightpos){
+void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySurf *p, ImageFile *imageFile, Camera* c, double worldwidth, double worldheight, bool ortho, float *transform, std::vector<Vector3d> lightpos, double glWidth){
 
 	sn = svn;
 	wfe = wFileExists;
-
 	img = imageFile;
 
 	Matrix4x4 matTrans;
@@ -510,6 +365,7 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 	orthographic = ortho;
 
 	//Adjust pixel height accordinglly
+	Width = glWidth;
 	Height = Width*(worldheight/worldwidth);
 	
 	//Camera *cam = new Camera(*viewpoint, *face, *up, d1);
@@ -591,22 +447,22 @@ void raytrace(char* argv[], std::string svn, int Nrays, bool wFileExists, PolySu
 					rx = (pw * -0.5) + (((double)rand() / RAND_MAX) * pw);
 					ry = (ph * -0.5) + (((double)rand() / RAND_MAX) * ph);
 				}
-				Vector3d p = center + ((px + rx) * ux) + ((py + ry) * uy);
+				Vector3d pcenter = center + ((px + rx) * ux) + ((py + ry) * uy);
 				//if orthographic, shoot ray perpendicular to screen
 				if(orthographic){
 					ur = cam->getDir().normalize();
-					pin = p;
+					pin = pcenter;
 				}
 				else{
-					ur = (p - pin).normalize();
+					ur = (pcenter - pin).normalize();
 				}
-				Vector3d nohit = Vector3d(-0.42363566508318828, -0.31759419697725882, -0.8483317448474359);
+				//Vector3d nohit = Vector3d(-0.42363566508318828, -0.31759419697725882, -0.8483317448474359);
 				Ray r(pin, ur);
 				closest = shoot(r, scene);
 				if(closest.objectid != -1){
 					count++;
-					//shades[n] = recShade(r, closest, 0, scene, lights);
-					shades[n] = nonRecShade(r, closest, lights);
+					shades[n] = recShade(r, closest, 0, scene, lights);
+					//shades[n] = nonRecShade(r, closest, lights);
 
 				}
 				else{

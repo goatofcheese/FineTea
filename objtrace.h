@@ -24,6 +24,4 @@
 #  include <GL/glut.h>
 #endif
 
-bool gluInvertMatrix(const float m[16], float invOut[16]);
-
-void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, double, bool, GLfloat *, std::vector<Vector3d>);
+void raytrace(char**, std::string, int, bool, PolySurf *, ImageFile *, Camera *, double, double, bool, GLfloat *, std::vector<Vector3d>, double);

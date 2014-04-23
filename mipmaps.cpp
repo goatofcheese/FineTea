@@ -101,7 +101,7 @@ static double Height = HEIGHT;
 static double DRAWWIDTH = 20;
 static double DRAWHEIGHT = 15;
 static double NEAR = 1;
-static double FAR = 100;
+static double FAR = 400;
 static double DEPTH = -20;
 static double WORLDWIDTH;
 
@@ -202,8 +202,6 @@ void updateProjection(){
 		double scale = fabs((double)NEAR / (double)DEPTH);
 		double xmax = scale * DRAWWIDTH / 2;
 		double ymax = scale * DRAWHEIGHT / 2;
-		cout<< "xmax: " << xmax << std::endl;
-		cout<< "ymax: " << ymax << std::endl;
 		glFrustum(-xmax, xmax, -ymax, ymax, NEAR, FAR);
 		WORLDWIDTH = 2. * xmax;
 	}
@@ -244,7 +242,7 @@ void drawModel(int wireframe){
 		}
 		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
-	        glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
 		if(wireframe){	
@@ -328,7 +326,6 @@ void doDisplay(){
 
 	int i = 0;
 	for(std::vector<Vector3d>::iterator iter = gl_lightspos.begin(); iter != gl_lightspos.end(); ++iter){
-	std::cerr << "in the light making loop";
 	    light_position[0] = (*iter)[0];
 	    light_position[1] = (*iter)[1];
 	    light_position[2] = (*iter)[2];
@@ -336,15 +333,12 @@ void doDisplay(){
 	    int n = 0;
 	    switch(i){
 		    case 0:
-			    std::cerr << "making light 0" << std::endl;
 			    n = GL_LIGHT0;
 			    break;
 		    case 1:
-			    std::cerr << "making light 1" << std::endl;
 			    n = GL_LIGHT1;
 			    break;
 		    case 2:
-			    std::cerr << "making light 2" << std::endl;
 			    n = GL_LIGHT2;
 			    break;
 	    }
@@ -380,8 +374,7 @@ void doDisplay(){
 				 mv[1], mv[5], mv[9], mv[13],
 				 mv[2], mv[6], mv[10], mv[14],
 				 mv[3], mv[7], mv[11], mv[15]);
-	std::cout<< "cam mod matrix: "<< std::endl<< m4<< std::endl;
-	std::cout<< "Theta X: "<< ThetaX<< std::endl;
+//	std::cout<< "cam mod matrix: "<< std::endl<< m4<< std::endl;
 
 	Vector4d camPos4 = Vector4d(0., 0., 0., 1.);
 	camPos4 = m4 * camPos4;
@@ -402,22 +395,10 @@ void doDisplay(){
 	camDir3 = Vector3d(camDir4[0], camDir4[1], camDir4[2]);
 	camUp3 = Vector3d(camUp4[0], camUp4[1], camUp4[2]);
 
-	std::cout<< "position: " << camPos3<< std::endl;
-	std::cout<< "direction: " << camDir3<< std::endl;
-	std::cout << "lightspos: " << rt_lightspos.front() << std::endl;
-	std::cout << std::endl;
 	cam->setDir(camDir3);
 	cam->setPinhole(camPos3);
 	cam->setUp(camUp3);
 
-Vector4d test = Vector4d(0.,0.,-1.,1.);
-//std::cerr << "idklel" << idklel << std::endl;
-	test = m4 * test;
-//	std::cerr << "thing james wanted pt1\t" << test << std::endl;
-	test = idklel * test;
-//	std::cerr << "thing james wanted pt2\t" << test << std::endl;
-//	std::cerr << std::endl;
-	// draw the model in wireframe or solid
 	drawModel(Wireframe);
     
 	glutSwapBuffers();
@@ -478,7 +459,7 @@ void handleKey(unsigned char key, int x, int y){
 		case 'R':
 			doReshape(Width, Height);
 			updateProjection();
-			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightspos);
+			raytrace(args, saveName, Nrays, wFileExists, psurf, image, cam, WORLDWIDTH, WORLDWIDTH * (Height/Width), !Projection, mv,rt_lightspos,Width);
 			break;
       
 		case 's':			// S -- toggle between flat and smooth shading
@@ -574,12 +555,10 @@ void initialize(){
 	setInitialState();
 	updateProjection();
   
-
 	//read in OBJFile
 	objfile.read(); 
  
 	psurf = objfile.getscene();
-	double propor = (psurf->GetBBox().bounds[1] - psurf->GetBBox().bounds[0]).norm();
 
 	// This is texture map sent to texture memory without mipmapping:
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTUREWIDTH, TEXTUREHEIGHT,
@@ -619,7 +598,7 @@ int main(int argc, char* argv[]){
 
 	//add to the lights vector
 	gl_lightspos.push_back(Vector3d(100,100,100));
-	gl_lightspos.push_back(Vector3d(-100,-100,80));
+	gl_lightspos.push_back(Vector3d(-100,100,40));
 
 	cam = new Camera(Vector3d(0., 0., 0.), Vector3d(0., 0., -1.), Vector3d(0., 1., 0.), 1.0);
 	// start up the glut utilities
